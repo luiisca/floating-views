@@ -15,16 +15,29 @@
  */
 package com.example.cupcake
 
+import FloatingService
+import android.app.Activity
+import android.app.ActivityManager
 import android.content.Context
+import android.content.Context.ACTIVITY_SERVICE
 import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import android.util.Log
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,13 +47,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -88,7 +102,7 @@ fun CupcakeAppBar(
 }
 
 @Composable
-fun CupcakeApp(
+fun FloatyApp(
     viewModel: OrderViewModel = viewModel(),
     navController: NavHostController = rememberNavController()
 ) {
@@ -159,12 +173,64 @@ fun CupcakeApp(
             )
         }
     ) { innerPadding ->
+        val context = LocalContext.current
+        println(innerPadding)
 
-        NavHost(
-            navController,
-            modifier = Modifier.padding(innerPadding),
-            graph = navGraph
-        )
+//        NavHost(
+//            navController,
+//            modifier = Modifier.padding(innerPadding),
+//            graph = navGraph
+//        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            LargeFloatingActionButton(
+                onClick = {
+                    Log.d("✅FloatingService", "about to start service")
+                    if (Settings.canDrawOverlays(context)) {
+                        context.startService(Intent(context, FloatingService::class.java))
+                        val isServiceRunning = (context.getSystemService(ACTIVITY_SERVICE) as ActivityManager)
+                            .getRunningServices(Integer.MAX_VALUE)
+                            .any { it.service.className == FloatingService::class.java.name}
+                        Log.d("✅FloatingService", "Service running: $isServiceRunning")
+                    } else {
+                        val intent = Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:${context.packageName}")
+                        )
+                        context.startActivity(intent)
+                    }
+                },
+                modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.BottomEnd),
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Create new floaty",
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+            FloatingActionButton(
+                onClick = {
+                    context.stopService(
+                        Intent(context, FloatingService::class.java)
+                    )},
+                modifier = Modifier
+                    .padding(8.dp)
+                    .align(Alignment.BottomEnd)
+                    // TODO: this is not good
+                    .offset((-120).dp),
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete floaty",
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+        }
     }
 }
 
