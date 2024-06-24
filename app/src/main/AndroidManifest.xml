@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <application
         android:icon="@mipmap/ic_launcher"
@@ -12,9 +14,13 @@
         android:theme="@style/Theme.Cupcake"
         tools:targetApi="33">
         <service
-            android:name="com.example.cupcake.FloatingService"
+            android:name=".FloatService"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="true"
+            android:foregroundServiceType="specialUse" >
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="timers and counters views displayed over other apps for workout reps counting, cooking or studying."/>
+        </service>
 
         <activity
             android:name=".MainActivity"

@@ -15,15 +15,12 @@
  */
 package com.example.cupcake
 
-import FloatingService
-import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Context.ACTIVITY_SERVICE
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -72,39 +69,38 @@ enum class CupcakeScreen(@StringRes val title: Int) {
     Summary(title = R.string.order_summary)
 }
 
-/**
- * Composable that displays the topBar and displays back button if back navigation is possible.
- */
+/** Composable that displays the topBar and displays back button if back navigation is possible. */
 @Composable
 fun CupcakeAppBar(
-    crrScreen: CupcakeScreen,
-    canNavigateBack: Boolean,
-    navigateUp: () -> Unit,
-    modifier: Modifier = Modifier
+        crrScreen: CupcakeScreen,
+        canNavigateBack: Boolean,
+        navigateUp: () -> Unit,
+        modifier: Modifier = Modifier
 ) {
     TopAppBar(
-        title = { Text(stringResource(id = crrScreen.title)) },
-        colors = TopAppBarDefaults.mediumTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        modifier = modifier,
-        navigationIcon = {
-            if (canNavigateBack) {
-                IconButton(onClick = navigateUp) {
-                    Icon(
-                        imageVector = Icons.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.back_button)
-                    )
+            title = { Text(stringResource(id = crrScreen.title)) },
+            colors =
+                    TopAppBarDefaults.mediumTopAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+            modifier = modifier,
+            navigationIcon = {
+                if (canNavigateBack) {
+                    IconButton(onClick = navigateUp) {
+                        Icon(
+                                imageVector = Icons.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.back_button)
+                        )
+                    }
                 }
             }
-        }
     )
 }
 
 @Composable
 fun FloatyApp(
-    viewModel: OrderViewModel = viewModel(),
-    navController: NavHostController = rememberNavController()
+        viewModel: OrderViewModel = viewModel(),
+        navController: NavHostController = rememberNavController()
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val uiState by viewModel.uiState.collectAsState()
@@ -113,142 +109,158 @@ fun FloatyApp(
         navController.createGraph(CupcakeScreen.Start.name) {
             composable(CupcakeScreen.Start.name) {
                 StartOrderScreen(
-                    quantityOptions = DataSource.quantityOptions,
-                    onNextButtonClicked = { numberCupcakes: Int ->
-                        viewModel.setQuantity(numberCupcakes)
-                        navController.navigate(CupcakeScreen.Flavor.name)
-                    },
-                    onCancelButtonClicked = { navController.popBackStack(CupcakeScreen.Start.name, inclusive = true) },
-                    navController = navController,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(dimensionResource(R.dimen.padding_medium))
+                        quantityOptions = DataSource.quantityOptions,
+                        onNextButtonClicked = { numberCupcakes: Int ->
+                            viewModel.setQuantity(numberCupcakes)
+                            navController.navigate(CupcakeScreen.Flavor.name)
+                        },
+                        onCancelButtonClicked = {
+                            navController.popBackStack(CupcakeScreen.Start.name, inclusive = true)
+                        },
+                        navController = navController,
+                        modifier =
+                                Modifier.fillMaxSize()
+                                        .padding(dimensionResource(R.dimen.padding_medium))
                 )
             }
             composable(CupcakeScreen.Flavor.name) {
                 val context = LocalContext.current
 
                 SelectOptionScreen(
-                    subtotal = uiState.price,
-                    options = DataSource.flavors.map {id -> context.resources.getString(id)},
-                    onCancelButtonClicked = { cancelOrderAndNavigateToStart(viewModel, navController) },
-                    onNextButtonClicked = {navController.navigate(CupcakeScreen.Pickup.name)},
-                    onSelectionChanged = {viewModel.setFlavor(it)},
-                    modifier = Modifier.fillMaxSize()
+                        subtotal = uiState.price,
+                        options = DataSource.flavors.map { id -> context.resources.getString(id) },
+                        onCancelButtonClicked = {
+                            cancelOrderAndNavigateToStart(viewModel, navController)
+                        },
+                        onNextButtonClicked = { navController.navigate(CupcakeScreen.Pickup.name) },
+                        onSelectionChanged = { viewModel.setFlavor(it) },
+                        modifier = Modifier.fillMaxSize()
                 )
             }
             composable(CupcakeScreen.Pickup.name) {
                 SelectOptionScreen(
-                    subtotal = uiState.price,
-                    options = uiState.pickupOptions,
-                    onCancelButtonClicked = { cancelOrderAndNavigateToStart(viewModel, navController) },
-                    onNextButtonClicked = {navController.navigate(CupcakeScreen.Summary.name)},
-                    onSelectionChanged = { viewModel.setDate(it) },
-                    modifier = Modifier.fillMaxSize()
+                        subtotal = uiState.price,
+                        options = uiState.pickupOptions,
+                        onCancelButtonClicked = {
+                            cancelOrderAndNavigateToStart(viewModel, navController)
+                        },
+                        onNextButtonClicked = {
+                            navController.navigate(CupcakeScreen.Summary.name)
+                        },
+                        onSelectionChanged = { viewModel.setDate(it) },
+                        modifier = Modifier.fillMaxSize()
                 )
             }
             composable(CupcakeScreen.Summary.name) {
                 val context = LocalContext.current
 
                 OrderSummaryScreen(
-                    orderUiState = uiState,
-                    onCancelButtonClicked = { cancelOrderAndNavigateToStart(viewModel, navController) },
-                    onSendButtonClicked = { order: String, summary: String ->
-                        shareOrder(context, order, summary)
-                    },
-                    modifier = Modifier.fillMaxSize()
+                        orderUiState = uiState,
+                        onCancelButtonClicked = {
+                            cancelOrderAndNavigateToStart(viewModel, navController)
+                        },
+                        onSendButtonClicked = { order: String, summary: String ->
+                            shareOrder(context, order, summary)
+                        },
+                        modifier = Modifier.fillMaxSize()
                 )
             }
         }
     }
 
     Scaffold(
-        topBar = {
-            CupcakeAppBar(
-                crrScreen = CupcakeScreen.valueOf(
-                    backStackEntry?.destination?.route ?: CupcakeScreen.Start.name
-                ),
-                canNavigateBack = navController.previousBackStackEntry != null,
-                navigateUp = {navController.navigateUp()}
-            )
-        }
+            topBar = {
+                CupcakeAppBar(
+                        crrScreen =
+                                CupcakeScreen.valueOf(
+                                        backStackEntry?.destination?.route
+                                                ?: CupcakeScreen.Start.name
+                                ),
+                        canNavigateBack = navController.previousBackStackEntry != null,
+                        navigateUp = { navController.navigateUp() }
+                )
+            }
     ) { innerPadding ->
         val context = LocalContext.current
         println(innerPadding)
 
-//        NavHost(
-//            navController,
-//            modifier = Modifier.padding(innerPadding),
-//            graph = navGraph
-//        )
+        //        NavHost(
+        //            navController,
+        //            modifier = Modifier.padding(innerPadding),
+        //            graph = navGraph
+        //        )
         Box(modifier = Modifier.fillMaxSize()) {
             LargeFloatingActionButton(
-                onClick = {
-                    Log.d("✅FloatingService", "about to start service")
-                    if (Settings.canDrawOverlays(context)) {
-                        context.startService(Intent(context, FloatingService::class.java))
-                        val isServiceRunning = (context.getSystemService(ACTIVITY_SERVICE) as ActivityManager)
-                            .getRunningServices(Integer.MAX_VALUE)
-                            .any { it.service.className == FloatingService::class.java.name}
-                        Log.d("✅FloatingService", "Service running: $isServiceRunning")
-                    } else {
-                        val intent = Intent(
-                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                            Uri.parse("package:${context.packageName}")
-                        )
-                        context.startActivity(intent)
-                    }
-                },
-                modifier = Modifier
-                    .padding(16.dp)
-                    .align(Alignment.BottomEnd),
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    onClick = {
+                        if (Settings.canDrawOverlays(context)) {
+                            context.startForegroundService(
+                                    Intent(context, FloatService::class.java)
+                            )
+                            val isServiceRunning =
+                                    (context.getSystemService(ACTIVITY_SERVICE) as ActivityManager)
+                                            .getRunningServices(Integer.MAX_VALUE)
+                                            .any {
+                                                it.service.className ==
+                                                        FloatService::class.java.name
+                                            }
+                            //                        Log.d("❌FloatService", "Service running:
+                            // $isServiceRunning")
+                        } else {
+                            val intent =
+                                    Intent(
+                                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                            Uri.parse("package:${context.packageName}")
+                                    )
+                            context.startActivity(intent)
+                        }
+                    },
+                    modifier = Modifier.padding(16.dp).align(Alignment.BottomEnd),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {
                 Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Create new floaty",
-                    modifier = Modifier.size(28.dp)
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Create new floaty",
+                        modifier = Modifier.size(28.dp)
                 )
             }
             FloatingActionButton(
-                onClick = {
-                    context.stopService(
-                        Intent(context, FloatingService::class.java)
-                    )},
-                modifier = Modifier
-                    .padding(8.dp)
-                    .align(Alignment.BottomEnd)
-                    // TODO: this is not good
-                    .offset((-120).dp),
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    onClick = { context.stopService(Intent(context, FloatService::class.java)) },
+                    modifier =
+                            Modifier.padding(8.dp)
+                                    .align(Alignment.BottomEnd)
+                                    // TODO: this is not good
+                                    .offset((-120).dp),
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
             ) {
                 Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete floaty",
-                    modifier = Modifier.size(14.dp)
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete floaty",
+                        modifier = Modifier.size(14.dp)
                 )
             }
         }
     }
 }
 
-private fun cancelOrderAndNavigateToStart(viewModel: OrderViewModel, navController: NavHostController) {
+private fun cancelOrderAndNavigateToStart(
+        viewModel: OrderViewModel,
+        navController: NavHostController
+) {
     navController.popBackStack(CupcakeScreen.Start.name, inclusive = false)
     viewModel.resetOrder()
 }
 
 private fun shareOrder(context: Context, order: String, summary: String) {
-    val intent = Intent(Intent.ACTION_SEND).apply {
-        this.type = "text/plain"
-        putExtra(Intent.EXTRA_SUBJECT, order)
-        putExtra(Intent.EXTRA_TEXT, summary)
-    }
+    val intent =
+            Intent(Intent.ACTION_SEND).apply {
+                this.type = "text/plain"
+                putExtra(Intent.EXTRA_SUBJECT, order)
+                putExtra(Intent.EXTRA_TEXT, summary)
+            }
     context.startActivity(
-        Intent.createChooser(
-            intent,
-            context.getString(R.string.new_cupcake_order)
-        )
+            Intent.createChooser(intent, context.getString(R.string.new_cupcake_order))
     )
 }
+
