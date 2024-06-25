@@ -119,8 +119,9 @@ fun FloatyApp(
                         },
                         navController = navController,
                         modifier =
-                                Modifier.fillMaxSize()
-                                        .padding(dimensionResource(R.dimen.padding_medium))
+                        Modifier
+                            .fillMaxSize()
+                            .padding(dimensionResource(R.dimen.padding_medium))
                 )
             }
             composable(CupcakeScreen.Flavor.name) {
@@ -214,7 +215,9 @@ fun FloatyApp(
                             context.startActivity(intent)
                         }
                     },
-                    modifier = Modifier.padding(16.dp).align(Alignment.BottomEnd),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .align(Alignment.BottomEnd),
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {
@@ -227,10 +230,11 @@ fun FloatyApp(
             FloatingActionButton(
                     onClick = { context.stopService(Intent(context, FloatService::class.java)) },
                     modifier =
-                            Modifier.padding(8.dp)
-                                    .align(Alignment.BottomEnd)
-                                    // TODO: this is not good
-                                    .offset((-120).dp),
+                    Modifier
+                        .padding(8.dp)
+                        .align(Alignment.BottomEnd)
+                        // TODO: this is not good
+                        .offset((-120).dp),
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer
             ) {

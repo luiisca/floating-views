@@ -1,5 +1,6 @@
 package com.example.cupcake
 
+import FloatView
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -56,6 +57,8 @@ class FloatService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+        floatViewLifecycleOwner.onStart()
+
         Log.d("❌FloatService", "onStartCommand")
 
         val params = WindowManager.LayoutParams(
