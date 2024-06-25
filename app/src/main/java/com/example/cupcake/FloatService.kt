@@ -10,17 +10,9 @@ import android.os.IBinder
 import android.util.Log
 import android.view.View
 import android.view.WindowManager
-import android.widget.ImageView
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationCompat
+import kotlin.random.Random
 
 class FloatService : Service() {
     private lateinit var windowManager: WindowManager
@@ -61,19 +53,19 @@ class FloatService : Service() {
 
         Log.d("❌FloatService", "onStartCommand")
 
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT
-        )
+        val params = WindowManager.LayoutParams().apply {
+            this.width = WindowManager.LayoutParams.WRAP_CONTENT
+            this.height = WindowManager.LayoutParams.WRAP_CONTENT
+            this.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            this.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+            this.format = PixelFormat.TRANSLUCENT
+            this.x = Random.nextInt(0, 1000)
+            this.y = Random.nextInt(0, 1000)
+        }
         try {
-            var chatHead = ImageView(this)
-//            chatHead.setImageResource(R.drawable.floating2)
-//            windowManager.addView(chatHead, params)
             val floatView = composeFloatView()
-            windowManager.addView(floatView, params)
+//            Log.d("✅FloatView-hashcode", floatView!!.hashCode().toString())
+            windowManager.addView(floatView!!, params)
         } catch (e: Exception) {
             Log.e("❌FloatService", "ERROR: ", e)
 
@@ -83,10 +75,18 @@ class FloatService : Service() {
         return START_STICKY
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+
+        floatViewLifecycleOwner.onPause()
+        floatViewLifecycleOwner.onStop()
+        floatViewLifecycleOwner.onDestroy()
+    }
+
     private fun composeFloatView(): View {
         val floatView = ComposeView(this).apply {
             this.setContent {
-                FloatView()
+                FloatView(windowManager, this)
             }
         }
 

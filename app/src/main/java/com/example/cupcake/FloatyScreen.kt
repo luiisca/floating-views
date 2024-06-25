@@ -227,23 +227,6 @@ fun FloatyApp(
                         modifier = Modifier.size(28.dp)
                 )
             }
-            FloatingActionButton(
-                    onClick = { context.stopService(Intent(context, FloatService::class.java)) },
-                    modifier =
-                    Modifier
-                        .padding(8.dp)
-                        .align(Alignment.BottomEnd)
-                        // TODO: this is not good
-                        .offset((-120).dp),
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-            ) {
-                Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete floaty",
-                        modifier = Modifier.size(14.dp)
-                )
-            }
         }
     }
 }
