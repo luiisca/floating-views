@@ -75,6 +75,8 @@ class BubbleBuilder(
     }
 
     /**
+     * (the name will be changed if I found a better one)
+     *
      * Set the clickable perimeter of the bubble in pixels (default = 5f).
      *
      * For example, when the bubble is dragged, it will still perform a click if
@@ -82,8 +84,8 @@ class BubbleBuilder(
      *
      * @param f The size of the clickable area in pixels.
      * @return This BubbleBuilder instance for method chaining.
+     *
      */
-    @Discouraged("the name will be changed if I found a better one")
     fun triggerClickablePerimeterPx(f: Float): BubbleBuilder {
         this.triggerClickablePerimeterPx = f
         return this
@@ -133,7 +135,9 @@ class BubbleBuilder(
         return this
     }
 
-    @Discouraged("when using bubbleCompose, you should set `forceDragging` to false. otherwise the bubbleCompose may not works correctly in some cases")
+    /**
+     * when using bubbleCompose, you should set `forceDragging` to false. otherwise the bubbleCompose may not works correctly in some cases
+     */
     fun bubbleCompose(content: @Composable () -> Unit): BubbleBuilder {
         this.bubbleCompose = ComposeView(context).apply {
             setContent(content)

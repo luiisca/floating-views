@@ -24,31 +24,40 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.withContext
 
 @Composable
-fun FloatView(windowManager: WindowManager, view: View) {
+//fun FloatView(windowManager: WindowManager, view: View) {
+//  val color = remember { mutableStateOf(randomColor()) }
+//
+//  Box(modifier = Modifier
+//    .size(100.dp)
+//    .background(color.value, shape = CircleShape)) {
+//      Button(onClick = { color.value = randomColor() }) { Text("Change Color") }
+//      FloatingActionButton(
+//        onClick = {
+//          try {
+//            windowManager.removeView(view)
+//          } catch (e: Exception) {
+//            e.printStackTrace()
+//          }
+//        },
+//        modifier = Modifier.padding(8.dp),
+//        containerColor = MaterialTheme.colorScheme.errorContainer,
+//        contentColor = MaterialTheme.colorScheme.onErrorContainer
+//      ) {
+//        Icon(
+//          imageVector = Icons.Default.Delete,
+//          contentDescription = "Delete floaty",
+//          modifier = Modifier.size(14.dp)
+//        )
+//      }
+//  }
+//}
+fun FloatView() {
   val color = remember { mutableStateOf(randomColor()) }
 
   Box(modifier = Modifier
     .size(100.dp)
     .background(color.value, shape = CircleShape)) {
-      Button(onClick = { color.value = randomColor() }) { Text("Change Color") }
-      FloatingActionButton(
-        onClick = {
-          try {
-            windowManager.removeView(view)
-          } catch (e: Exception) {
-            e.printStackTrace()
-          }
-        },
-        modifier = Modifier.padding(8.dp),
-        containerColor = MaterialTheme.colorScheme.errorContainer,
-        contentColor = MaterialTheme.colorScheme.onErrorContainer
-      ) {
-        Icon(
-          imageVector = Icons.Default.Delete,
-          contentDescription = "Delete floaty",
-          modifier = Modifier.size(14.dp)
-        )
-      }
+    Button(onClick = { color.value = randomColor() }) { Text("Change Color") }
   }
 }
 

@@ -7,11 +7,19 @@ import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.IBinder
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationCompat
+import com.floatingview.library.CloseBubbleBehavior
+import com.floatingview.library.FloatingBubbleListener
+import com.floatingview.library.helper.NotificationHelper
+import com.floatingview.library.helper.ViewHelper
+import com.floatingview.library.service.expandable.BubbleBuilder
 import com.floatingview.library.service.expandable.ExpandableBubbleService
+import com.floatingview.library.service.expandable.ExpandedBubbleBuilder
+import com.floatingview.library.R
 import kotlin.random.Random
 
 class FloatService : ExpandableBubbleService() {
@@ -110,13 +118,12 @@ class FloatService : ExpandableBubbleService() {
     }
 
     override fun configBubble(): BubbleBuilder {
-        val imgView = ViewHelper.fromDrawable(this, R.drawable.ic_rounded_blue_diamond, 60, 60)
-
-        imgView.setOnClickListener { expand() }
-
         // TODO: refactor to use simpler context fn or something
         // so there is no need to manually define each builder function
         // instead directly manipulate instance props. I think apply may work, not sure though
+//        val bubble = BubbleBuilder(this)
+//        Log.d("✅FloatService.configBubble", bubble.bubbleTest().toString())
+//        return bubble
         return BubbleBuilder(this)
 
             // set bubble view
@@ -176,26 +183,19 @@ class FloatService : ExpandableBubbleService() {
             )
     }
 
-    override fun configExpandedBubble(): ExpandedBubbleBuilder? {
-
-        val expandedView = LayoutInflater.from(this).inflate(R.layout.layout_view_test, null)
-        expandedView.findViewById<View>(R.id.btn).setOnClickListener { minimize() }
+    override fun configExpandedBubble(): ExpandedBubbleBuilder {
+//        val bubble = ExpandedBubbleBuilder(this)
+//        Log.d("✅FloatService.configBubble", bubble.expandedCompose().toString())
+//        return bubble
 
         return ExpandedBubbleBuilder(this)
-            //            .expandedView(expandedView)
-            .expandedCompose { TestComposeView(popBack = { minimize() }) }
-            .onDispatchKeyEvent {
-                if (it.keyCode == KeyEvent.KEYCODE_BACK) {
-                    minimize()
-                }
-                null
-            }
             .startLocation(0, 0)
             .draggable(true)
             .style(null)
             .fillMaxWidth(false)
             .enableAnimateToEdge(true)
             .dimAmount(0.5f)
+            .expandedCompose { TestComposeView(popBack = { minimize() }) }
     }
 
 }
