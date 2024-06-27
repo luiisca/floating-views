@@ -14,7 +14,7 @@
      limitations under the License.
 -->
 <resources>
-    <string name="app_name">Cupcake</string>
+    <string name="app_name">Floaty</string>
     <string name="order_cupcakes">Hey kid&#8230; want a cupcake?</string>
     <string name="one_cupcake">One Cupcake please</string>
     <string name="six_cupcakes">Six Cupcakes</string>

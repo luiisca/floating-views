@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
+package com.floaty.app
+
+import FloatView
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import com.floaty.app.ui.theme.CupcakeTheme
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        this.enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
+
+        this.test()
+    }
+    fun test() {
+        this.setContent {
+            CupcakeTheme {
+                FloatyApp()
+            }
+        }
     }
 }
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-rootProject.name = "Floaty"
-include(":app")
-include(":floating-view")
