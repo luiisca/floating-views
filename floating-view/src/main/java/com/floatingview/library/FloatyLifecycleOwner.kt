@@ -1,4 +1,4 @@
-package com.floaty.app
+package com.floatingview.library
 
 import android.view.View
 import androidx.compose.runtime.Recomposer
@@ -20,7 +20,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
-class FloatViewLifecycleOwner() :
+class FloatyLifecycleOwner() :
     LifecycleOwner, ViewModelStoreOwner, SavedStateRegistryOwner {
 
     private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)

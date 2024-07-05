@@ -14,18 +14,20 @@
         android:theme="@style/Theme.Cupcake"
         tools:targetApi="33">
         <service
-            android:name=".FloatService"
+            android:name=".FloatyService"
             android:enabled="true"
             android:exported="true"
-            android:foregroundServiceType="specialUse" >
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="timers and counters views displayed over other apps for workout reps counting, cooking or studying."/>
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="timers and counters views displayed over other apps for workout reps counting, cooking or studying." />
         </service>
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Cupcake">
+            android:theme="@style/Theme.Cupcake"
+            android:windowSoftInputMode="adjustResize"> <!-- insets support -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
