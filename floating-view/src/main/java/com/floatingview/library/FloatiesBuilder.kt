@@ -16,27 +16,31 @@ import com.floatingview.library.composables.MainFloaty
 import com.floatingview.library.helpers.NotificationHelper
 import com.floatingview.library.helpers.toPx
 
-interface FloatiesConfig {
-    var composable: (@Composable () -> Unit)?
-    var view: View?
-    var closeView: View?
-    var startPointDp: Point?
-    var startPointPx: Point?
-    var isAnimateToEdgeEnabled: Boolean
-    var distanceToCloseDp: Int
-    var isBottomBackgroundEnabled: Boolean
-}
+data class MainFloatyConfig(
+    val composable: (@Composable () -> Unit)? = null,
+    val view: View? = null,
+    var startPointDp: Point? = Point(0, 0),
+    var startPointPx: Point? = Point(0, 0),
+    var isDragToEdgeEnabled: Boolean? = true,
+    var isDragToEdgeAnimationEnabled: Boolean? = true,
+)
+data class CloseFloatyConfig(
+    val composable: (@Composable () -> Unit)? = null,
+    val view: View? = null,
+    val distanceToCloseDp: Int? = 100,
+)
+data class BottomBackConfig(
+    val composable: (@Composable () -> Unit)? = null,
+    val view: View? = null,
+    val enabled: Boolean? = true
+)
 
-class FloatiesBuilder(private val context: Context): FloatiesConfig {
-    override var composable: (@Composable () -> Unit)? = null
-    override var view: View? = null
-    override var closeView: View? = null
-    override var startPointDp: Point? = Point(0, 0)
-    override var startPointPx: Point? = Point(0, 0)
-    override var isAnimateToEdgeEnabled: Boolean = true
-    override var distanceToCloseDp: Int = 100
-    override var isBottomBackgroundEnabled: Boolean = false
-
+class FloatiesBuilder(
+    private val context: Context,
+    private val mainFloatyConfig: MainFloatyConfig? = MainFloatyConfig(),
+    private val closeFloatyConfig: CloseFloatyConfig? = CloseFloatyConfig(),
+    private val bottomBackConfig: BottomBackConfig? = BottomBackConfig()
+) {
     private val composeOwner = FloatyLifecycleOwner()
     private var isComposeOwnerInit: Boolean = false
 
@@ -63,6 +67,8 @@ class FloatiesBuilder(private val context: Context): FloatiesConfig {
 
     }
     private fun createMainView() {
+        val (composable, view, startPointDp, startPointPx, isAnimateToEdgeEnabled) = mainFloatyConfig!!
+
         val startPoint = Point(
             startPointDp?.x?.toPx() ?: startPointPx?.x ?: 0,
             startPointDp?.y?.toPx() ?: startPointPx?.y ?: 0
@@ -123,14 +129,5 @@ class FloatiesBuilder(private val context: Context): FloatiesConfig {
         }
         composeOwner.onStart()
         composeOwner.onResume()
-    }
-
-    companion object {
-        inline operator fun invoke(
-                context: Context,
-                block: FloatiesConfig.() -> Unit
-        ): FloatiesBuilder {
-            return FloatiesBuilder(context).apply(block)
-        }
     }
 }
