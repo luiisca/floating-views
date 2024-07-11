@@ -1,12 +1,13 @@
 package com.floaty.app
 
-import CloseFloatyConfig
 import FloatView
 import FloatiesBuilder
 import MainFloatyConfig
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 
 class FloatyService : Service() {
   private lateinit var floatiesBuilder: FloatiesBuilder
@@ -20,7 +21,10 @@ class FloatyService : Service() {
     floatiesBuilder = FloatiesBuilder(
       this,
       mainFloatyConfig = MainFloatyConfig(
-        composable = {FloatView()}
+        composable = {FloatView()},
+//        isDraggingAnimationEnabled = false,
+//        isSnapToEdgeEnabled = true,
+//        isSnapToEdgeAnimationEnabled = true,
       ),
     )
 

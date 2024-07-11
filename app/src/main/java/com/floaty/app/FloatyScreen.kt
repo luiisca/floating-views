@@ -92,50 +92,45 @@ fun FloatyApp(
         navController: NavHostController = rememberNavController()
 ) {
   val backStackEntry by navController.currentBackStackEntryAsState()
-  val density = LocalDensity.current
-  val systemBarsInsets = WindowInsets.systemBars
 
-  Log.d("✅FloatyApp - sysTop", systemBarsInsets.getTop(density).toString())
+  Scaffold(
+    topBar = {
+      CupcakeAppBar(
+        crrScreen =
+                CupcakeScreen.valueOf(
+                        backStackEntry?.destination?.route
+                                ?: CupcakeScreen.Start.name
+                ),
+        canNavigateBack = navController.previousBackStackEntry != null,
+        navigateUp = { navController.navigateUp() }
+      )
+    },
+    floatingActionButton = {
+      val context = LocalContext.current
 
-    Scaffold(
-      topBar = {
-        CupcakeAppBar(
-          crrScreen =
-                  CupcakeScreen.valueOf(
-                          backStackEntry?.destination?.route
-                                  ?: CupcakeScreen.Start.name
-                  ),
-          canNavigateBack = navController.previousBackStackEntry != null,
-          navigateUp = { navController.navigateUp() }
+      LargeFloatingActionButton(
+        onClick = {
+          PermissionHelper.startFloatyServiceIfPermitted(context, FloatyService::class.java)
+        },
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+      ) {
+        Icon(
+          imageVector = Icons.Default.Add,
+          contentDescription = "Create new floaty",
+          modifier = Modifier.size(28.dp)
         )
-      },
-      floatingActionButton = {
-        val context = LocalContext.current
-
-        LargeFloatingActionButton(
-          onClick = {
-            PermissionHelper.startFloatyServiceIfPermitted(context, FloatyService::class.java)
-          },
-          containerColor = MaterialTheme.colorScheme.primaryContainer,
-          contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        ) {
-          Icon(
-            imageVector = Icons.Default.Add,
-            contentDescription = "Create new floaty",
-            modifier = Modifier.size(28.dp)
-          )
-        }
       }
-
-    ) { innerPadding ->
-        println(innerPadding)
-
-        //        NavHost(
-        //            navController,
-        //            modifier = Modifier.padding(innerPadding),
-        //            graph = navGraph
-        //        )
     }
+
+  ) { innerPadding ->
+    println(innerPadding)
+      //        NavHost(
+      //            navController,
+      //            modifier = Modifier.padding(innerPadding),
+      //            graph = navGraph
+      //        )
+  }
 }
 
 private fun cancelOrderAndNavigateToStart(

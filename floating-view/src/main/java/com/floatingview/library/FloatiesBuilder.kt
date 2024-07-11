@@ -7,7 +7,12 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.Transition
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.viewinterop.AndroidView
 import com.floatingview.library.FloatyLifecycleOwner
@@ -21,8 +26,27 @@ data class MainFloatyConfig(
     val view: View? = null,
     var startPointDp: Point? = Point(0, 0),
     var startPointPx: Point? = Point(0, 0),
-    var isDragToEdgeEnabled: Boolean? = true,
-    var isDragToEdgeAnimationEnabled: Boolean? = true,
+    var isDraggingAnimationEnabled: Boolean? = true,
+    var draggingTransitionSpec: @Composable() (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)? = null,
+    var snapToEdgeTransitionSpec: @Composable() (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)? = null,
+    /**
+     * determines whether `onDragEnd` callback will cause composable to be dragged to the edge of the screen
+     */
+    var isSnapToEdgeEnabled: Boolean? = true,
+    /**
+     * determines whether edge dragging should be animated
+     */
+    var isSnapToEdgeAnimationEnabled: Boolean? = true,
+    var onTap: ((Offset) -> Unit)? = null,
+    var onDragStart: ((offset: Offset) -> Unit)? = null,
+    var onDrag: ((
+        change: PointerInputChange,
+        dragAmount: Offset,
+        newX: Int,
+        newY: Int,
+        animatedX: Int?,
+        animatedY: Int?) -> Unit)? = null,
+    var onDragEnd: (() -> Unit)? = null,
 )
 data class CloseFloatyConfig(
     val composable: (@Composable () -> Unit)? = null,
@@ -67,11 +91,9 @@ class FloatiesBuilder(
 
     }
     private fun createMainView() {
-        val (composable, view, startPointDp, startPointPx, isAnimateToEdgeEnabled) = mainFloatyConfig!!
-
         val startPoint = Point(
-            startPointDp?.x?.toPx() ?: startPointPx?.x ?: 0,
-            startPointDp?.y?.toPx() ?: startPointPx?.y ?: 0
+            mainFloatyConfig?.startPointDp?.x?.toPx() ?: mainFloatyConfig?.startPointPx?.x ?: 0,
+            mainFloatyConfig?.startPointDp?.y?.toPx() ?: mainFloatyConfig?.startPointPx?.y ?: 0
         )
         val layoutParams = baseLayoutParams().apply {
             flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
@@ -88,12 +110,11 @@ class FloatiesBuilder(
                     windowManager = windowManager,
                     containerView = this,
                     layoutParams = layoutParams,
-                    onTap = {Log.d("//library - onTap", "tapped!")},
-                    onMove = {x, y -> Log.d("||library - onMove", "$x - $y")},
+                    config = mainFloatyConfig!!
                 ) {
                     when {
-                        view != null -> AndroidView(factory = { view!! })
-                        composable != null -> composable!!()
+                        mainFloatyConfig.view != null -> AndroidView(factory = { mainFloatyConfig.view })
+                        mainFloatyConfig.composable != null -> mainFloatyConfig.composable.invoke()
                         else -> throw IllegalArgumentException("Either compose or view must be provided")
                     }
                 }
