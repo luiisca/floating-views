@@ -22,9 +22,6 @@ class FloatyService : Service() {
       this,
       mainFloatyConfig = MainFloatyConfig(
         composable = {FloatView()},
-//        isDraggingAnimationEnabled = false,
-//        isSnapToEdgeEnabled = true,
-//        isSnapToEdgeAnimationEnabled = true,
       ),
     )
 

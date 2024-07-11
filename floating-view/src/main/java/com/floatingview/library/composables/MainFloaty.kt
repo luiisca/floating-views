@@ -2,13 +2,10 @@ package com.floatingview.library.composables
 
 import MainFloatyConfig
 import android.graphics.Point
-import android.util.Log
 import android.view.WindowManager
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.Transition.Segment
-import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateInt
 import androidx.compose.animation.core.calculateTargetValue
 import androidx.compose.animation.core.spring
@@ -58,45 +55,7 @@ fun MainFloaty(
     )
   }
   val contentSize = remember { mutableStateOf(IntSize.Zero) }
-
   var point by remember { mutableStateOf(Point(layoutParams.x,layoutParams.y)) }
-  var animateToEdge by remember { mutableStateOf(false) }
-
-  val pointTransition = updateTransition(targetState = point, label = "point transition")
-  val defaultDraggingSpring: @Composable Segment<Point>.() -> FiniteAnimationSpec<Int> = remember {{
-    spring(
-      dampingRatio = Spring.DampingRatioNoBouncy,
-      stiffness = Spring.StiffnessHigh
-    )
-  }}
-  val defaultToEdgeSpring: @Composable Segment<Point>.() -> FiniteAnimationSpec<Int> = remember {{
-    spring(
-      dampingRatio = Spring.DampingRatioMediumBouncy,
-      stiffness = Spring.StiffnessMedium
-    )
-  }}
-  val customSpring = if (animateToEdge) {
-    if (config.snapToEdgeTransitionSpec != null) {
-      config.snapToEdgeTransitionSpec!!
-    } else {
-      defaultToEdgeSpring
-    }
-  } else {
-    if (config.draggingTransitionSpec !== null) {
-      config.draggingTransitionSpec!!
-    } else {
-      defaultDraggingSpring
-    }
-  }
-
-  val newLayoutPointX by pointTransition.animateInt(
-    label = "point x transition",
-    transitionSpec = customSpring
-  ) { state: Point -> state.x }
-  val newLayoutPointY by pointTransition.animateInt(
-    label = "point y transition",
-    transitionSpec = customSpring
-  ) {state: Point -> state.y }
 
   // coerces `point` within updated screen boundaries
   LaunchedEffect(key1 = configuration, key2 = contentSize) {
@@ -124,13 +83,6 @@ fun MainFloaty(
     )
   }
 
-  LaunchedEffect(key1 = newLayoutPointX, key2 = newLayoutPointY) {
-    windowManager.updateViewLayout(containerView, layoutParams.apply {
-      x = newLayoutPointX
-      y = newLayoutPointY
-    })
-  }
-
   Box(
     modifier = modifier
       .onSizeChanged { size ->
@@ -151,15 +103,12 @@ fun MainFloaty(
         var animateToEdge by remember { mutableStateOf(false) }
 
         var newChange by remember { mutableStateOf<PointerInputChange?>(null) }
-        var newDragAmount by remember {mutableStateOf<Offset?>(null)}
+        var newDragAmount by remember { mutableStateOf<Offset?>(null) }
         var newX by remember { mutableIntStateOf(0) }
         var newY by remember { mutableIntStateOf(0) }
 
-        if (
-          config.isDraggingAnimationEnabled == true ||
-          (config.isSnapToEdgeEnabled == true && config.isSnapToEdgeAnimationEnabled == true)
-          ) {
-          val transition = updateTransition(targetState = point, label = "point transition")
+        val transition = updateTransition(targetState = point, label = "point transition")
+        if (config.enableAnimations == true) {
           if (animateToEdge) {
             transitionSpec = config.snapToEdgeTransitionSpec ?: {
               spring(
@@ -186,24 +135,18 @@ fun MainFloaty(
           ) { it.y }
 
           LaunchedEffect(key1 = animatedX, key2 = animatedY) {
-            if (config.isDraggingAnimationEnabled == true) {
-              config.onDrag?.invoke(
-                newChange!!,
-                newDragAmount!!,
-                newX,
-                newY,
-                animatedX,
-                animatedY,
-              )
-            }
-            if ((config.isDraggingAnimationEnabled == true && !animateToEdge) ||
-              (animateToEdge && config.isSnapToEdgeEnabled == true && config.isSnapToEdgeAnimationEnabled == true)
-              ) {
-              windowManager.updateViewLayout(containerView, layoutParams.apply {
-                x = animatedX
-                y = animatedY
-              })
-            }
+            config.onDrag?.invoke(
+              newChange!!,
+              newDragAmount!!,
+              newX,
+              newY,
+              animatedX,
+              animatedY,
+            )
+            windowManager.updateViewLayout(containerView, layoutParams.apply {
+              x = animatedX
+              y = animatedY
+            })
           }
         }
 
@@ -218,25 +161,38 @@ fun MainFloaty(
             onDrag = { change, dragAmount ->
               animateToEdge = false
 
-              Log.d("✅onDrag 1", "onDrag 1")
-              newChange = change
-              newDragAmount = dragAmount
-              newX = (point.x + dragAmount.x.toInt()).coerceIn(
-                0,
-                screenSize.value.width - contentSize.value.width
-              )
-              newY = (point.y + dragAmount.y.toInt()).coerceIn(
-                0,
-                screenSize.value.height - contentSize.value.height
-              )
-
-              point = Point(newX, newY)
-
-              if (config.isDraggingAnimationEnabled != true) {
+              if (config.enableAnimations == true) {
+                newChange = change
+                newDragAmount = dragAmount
+                newX = (point.x + dragAmount.x.toInt()).coerceIn(
+                  0,
+                  screenSize.value.width - contentSize.value.width
+                )
+                newY = (point.y + dragAmount.y.toInt()).coerceIn(
+                  0,
+                  screenSize.value.height - contentSize.value.height
+                )
+                val newPoint = Point(newX, newY)
+                point = newPoint
+                if (config.isSnapToEdgeEnabled == true) {
+                  velocityTracker.addPosition(change.uptimeMillis, change.position)
+                }
+              } else {
+                val newLayoutX = (point.x + dragAmount.x.toInt()).coerceIn(
+                  0,
+                  screenSize.value.width - contentSize.value.width
+                )
+                val newLayoutY = (point.y + dragAmount.y.toInt()).coerceIn(
+                  0,
+                  screenSize.value.height - contentSize.value.height
+                )
                 windowManager.updateViewLayout(containerView, layoutParams.apply {
-                  x = newX
-                  y = newY
+                  x = newLayoutX
+                  y = newLayoutY
                 })
+
+                point = Point(newLayoutX, newLayoutY)
+
                 config.onDrag?.invoke(
                   change,
                   dragAmount,
@@ -247,35 +203,37 @@ fun MainFloaty(
                 )
               }
 
-              if (config.isSnapToEdgeEnabled == true && config.isSnapToEdgeAnimationEnabled == true) {
-                velocityTracker.addPosition(change.uptimeMillis, change.position)
-              }
             },
             onDragEnd = {
               if (config.isSnapToEdgeEnabled == true) {
-                if (config.isSnapToEdgeAnimationEnabled == true) {
-                  animateToEdge = true
-
+                if (config.enableAnimations == true) {
                   val decayX = decay.calculateTargetValue(
                     initialValue = point.x.toFloat(),
                     initialVelocity = velocityTracker.calculateVelocity().x
                   )
-                  val targetX = if (decayX > screenSize.value.width * 0.5) {
-                    screenSize.value.width - size.width
+                  val targetX = if (decayX > screenSize.value.width * 0.5f) {
+                    screenSize.value.width - contentSize.value.width
+                  } else {
+                    0
+                  }
+
+                  point = Point(
+                    targetX.coerceIn(0, screenSize.value.width - contentSize.value.width),
+                    point.y.coerceIn(0, screenSize.value.height - contentSize.value.height)
+                  )
+                  animateToEdge = true
+                } else {
+                  val targetX = if (point.x > screenSize.value.width * 0.5) {
+                    screenSize.value.width - contentSize.value.width
                   } else {
                     0
                   }
                   point = Point(
-                    targetX.coerceIn(0, screenSize.value.width  - size.width),
-                    point.y.coerceIn(0, screenSize.value.height - size.height)
-                  )
-                } else {
-                  point = Point(
-                    0,
+                    targetX,
                     layoutParams.y
                   )
                   windowManager.updateViewLayout(containerView, layoutParams.apply {
-                    x = 0
+                    x = targetX
                     y = layoutParams.y
                   })
                 }
@@ -283,7 +241,6 @@ fun MainFloaty(
               config.onDragEnd?.let { it() }
             }
           )
-
         }
       }
   ) {

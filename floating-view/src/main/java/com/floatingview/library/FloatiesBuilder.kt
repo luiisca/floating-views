@@ -26,17 +26,13 @@ data class MainFloatyConfig(
     val view: View? = null,
     var startPointDp: Point? = Point(0, 0),
     var startPointPx: Point? = Point(0, 0),
-    var isDraggingAnimationEnabled: Boolean? = true,
+    var enableAnimations: Boolean? = true,
     var draggingTransitionSpec: @Composable() (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)? = null,
     var snapToEdgeTransitionSpec: @Composable() (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)? = null,
     /**
      * determines whether `onDragEnd` callback will cause composable to be dragged to the edge of the screen
      */
     var isSnapToEdgeEnabled: Boolean? = true,
-    /**
-     * determines whether edge dragging should be animated
-     */
-    var isSnapToEdgeAnimationEnabled: Boolean? = true,
     var onTap: ((Offset) -> Unit)? = null,
     var onDragStart: ((offset: Offset) -> Unit)? = null,
     var onDrag: ((
