@@ -1,13 +1,14 @@
 package com.floaty.app
 
 import FloatView
-import FloatiesBuilder
-import MainFloatyConfig
 import android.app.Service
 import android.content.Intent
+import android.graphics.Point
+import android.graphics.PointF
 import android.os.IBinder
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import com.floatingview.library.CloseFloatyConfig
+import com.floatingview.library.FloatiesBuilder
+import com.floatingview.library.MainFloatyConfig
 
 class FloatyService : Service() {
   private lateinit var floatiesBuilder: FloatiesBuilder
@@ -22,7 +23,12 @@ class FloatyService : Service() {
       this,
       mainFloatyConfig = MainFloatyConfig(
         composable = {FloatView()},
+        enableAnimations = false,
+        isSnapToEdgeEnabled = false,
       ),
+      closeFloatyConfig = CloseFloatyConfig(
+        startPointDp = PointF(100f, 200f)
+      )
     )
 
     // can be omitted for service.startForeground with custom notification or just pass custom properties
