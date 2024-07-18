@@ -17,14 +17,22 @@ package com.floaty.app
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.util.Log
+import android.view.WindowInsets
+import android.view.WindowManager
+import android.view.WindowMetrics
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -38,11 +46,14 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -92,19 +103,21 @@ fun FloatyApp(
         navController: NavHostController = rememberNavController()
 ) {
   val backStackEntry by navController.currentBackStackEntryAsState()
+  val density = LocalDensity.current
+  val configuration = LocalConfiguration.current
 
   Scaffold(
-    topBar = {
-      CupcakeAppBar(
-        crrScreen =
-                CupcakeScreen.valueOf(
-                        backStackEntry?.destination?.route
-                                ?: CupcakeScreen.Start.name
-                ),
-        canNavigateBack = navController.previousBackStackEntry != null,
-        navigateUp = { navController.navigateUp() }
-      )
-    },
+//    topBar = {
+//      CupcakeAppBar(
+//        crrScreen =
+//                CupcakeScreen.valueOf(
+//                        backStackEntry?.destination?.route
+//                                ?: CupcakeScreen.Start.name
+//                ),
+//        canNavigateBack = navController.previousBackStackEntry != null,
+//        navigateUp = { navController.navigateUp() }
+//      )
+//    },
     floatingActionButton = {
       val context = LocalContext.current
 
@@ -122,7 +135,6 @@ fun FloatyApp(
         )
       }
     }
-
   ) { innerPadding ->
     println(innerPadding)
       //        NavHost(
@@ -151,22 +163,6 @@ private fun shareOrder(context: Context, order: String, summary: String) {
     context.startActivity(
             Intent.createChooser(intent, context.getString(R.string.new_cupcake_order))
     )
-}
-
-@Composable
-fun BoxTest() {
-  val density = LocalDensity.current
-  val systemBarsInsets = WindowInsets.systemBars
-
-  Log.d("✅BoxTest - sysTop", systemBarsInsets.getTop(density).toString())
-
-  Box(
-    modifier = Modifier
-      .background(Color.Blue)
-      .fillMaxSize()
-  ) {
-    Text(text = "Test box")
-  }
 }
 
 //val navGraph = remember {

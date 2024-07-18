@@ -6,11 +6,14 @@ import android.graphics.PixelFormat
 import android.graphics.Point
 import android.graphics.PointF
 import android.os.Build
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.Transition
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -28,14 +31,56 @@ import com.floatingview.library.composables.MainFloaty
 import com.floatingview.library.helpers.NotificationHelper
 import com.floatingview.library.helpers.toPx
 
+enum class CloseBehavior {
+    /**
+     * dragging main float pass `CloseFloatConfig.closingThreshold` will snap it to close float
+     */
+    MAIN_SNAPS_TO_CLOSE_FLOAT,
+    /**
+     * dragging main float pass `CloseFloatConfig.closingThreshold` will snap close float to it
+     */
+    CLOSE_SNAPS_TO_MAIN_FLOAT,
+}
+
 data class MainFloatyConfig(
     val composable: (@Composable () -> Unit)? = null,
     val view: View? = null,
     var startPointDp: PointF? = PointF(0f, 0f),
     var startPointPx: PointF? = PointF(0f, 0f),
-    var enableAnimations: Boolean? = true,
-    var draggingTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)? = null,
-    var snapToEdgeTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)? = null,
+    /**
+     * transition spec for default dragging animation
+     *
+     * default:
+     * ```
+     * spring(
+     *      dampingRatio = Spring.DampingRatioNoBouncy,
+     *      stiffness = Spring.StiffnessHigh
+     * )
+     * ```
+     */
+    var draggingTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>) = {
+        spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessHigh
+        )
+    },
+    /**
+     * transition spec for snap main float to edge animation
+     *
+     * default:
+     * ```
+     * spring(
+     *      dampingRatio = Spring.DampingRatioMediumBouncy,
+     *      stiffness = Spring.StiffnessMedium
+     * )
+     * ```
+     */
+    var snapToEdgeTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>) = {
+        spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        )
+    },
     /**
      * drag floaty to closest screen edge
      */
@@ -57,15 +102,46 @@ data class CloseFloatyConfig(
     val view: View? = null,
     var startPointDp: PointF? = null,
     var startPointPx: PointF? = null,
-    val openThresholdDp: Float? = 5f,
-    val openThresholdPx: Float? = 5f,
-    val closeThresholdDp: Float? = 100f,
-    val closeThresholdPx: Float? = 100f,
-    var snapToCloseTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)? = null,
+    val mountThresholdDp: Float? = 1f,
+    val mountThresholdPx: Float? = 5f,
+    val closingThresholdDp: Float? = 100f,
+    val closingThresholdPx: Float? = 100f,
+    val bottomPaddingDp: Float? = 16f,
+    val bottomPaddingPx: Float? = 48f,
     /**
-     * drag floaty to closing area when distance between them is over `CloseFloatyConfig.openThreshold`
+     * transition spec for animation when `CloseFloatConfig.closeBehavior` set to MAIN_SNAPS_TO_CLOSE_FLOAT
+     *
+     * default:
+     * ```
+     * spring(
+     *      dampingRatio = Spring.DampingRatioHighBouncy,
+     *      stiffness = Spring.StiffnessLow
+     * )
+     * ```
      */
-    var isSnapToCloseEnabled: Boolean? = true,
+    var snapToCloseTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>) = {
+        spring(
+            dampingRatio = Spring.DampingRatioHighBouncy,
+            stiffness = Spring.StiffnessLow
+        )},
+    /**
+     * transition spec for animation when `CloseFloatConfig.closeBehavior` set to CLOSE_SNAPS_TO_MAIN_FLOAT
+     *
+     * default:
+     * ```
+     * spring(
+     *      dampingRatio = Spring.DampingRatioLowBouncy,
+     *      stiffness = Spring.StiffnessLow
+     * )
+     * ```
+     */
+    var snapToMainTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>) = {
+      spring(
+        dampingRatio = Spring.DampingRatioLowBouncy,
+        stiffness = Spring.StiffnessLow
+      )
+    },
+    var closeBehavior: CloseBehavior? = CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT,
 )
 data class BottomBackConfig(
     val composable: (@Composable () -> Unit)? = null,
@@ -75,6 +151,7 @@ data class BottomBackConfig(
 
 class FloatiesBuilder(
     private val context: Context,
+    private val enableAnimations: Boolean? = true,
     private val mainFloatyConfig: MainFloatyConfig? = MainFloatyConfig(),
     private val closeFloatyConfig: CloseFloatyConfig? = CloseFloatyConfig(),
     private val bottomBackConfig: BottomBackConfig? = BottomBackConfig()
@@ -107,6 +184,7 @@ class FloatiesBuilder(
             closeFloatyConfig?.startPointDp?.x?.toPx() ?: closeFloatyConfig?.startPointPx?.x ?: 0f,
             closeFloatyConfig?.startPointDp?.y?.toPx() ?: closeFloatyConfig?.startPointPx?.y ?: 0f
         )
+        Log.d("✅createCloseView() - startPoint", startPoint.toString())
 
         val hasCustomPos = closeFloatyConfig?.startPointDp != null || closeFloatyConfig?.startPointPx != null
         closeLayoutParams = baseLayoutParams().apply {
@@ -164,6 +242,7 @@ class FloatiesBuilder(
                     closeContainerView = closeContainerView,
                     layoutParams = layoutParams,
                     closeLayoutParams = closeLayoutParams,
+                    enableAnimations = enableAnimations,
                     config = mainFloatyConfig!!,
                     closeConfig = closeFloatyConfig!!,
                 ) {

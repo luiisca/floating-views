@@ -2,6 +2,7 @@ package com.floatingview.library.composables
 
 import android.graphics.Point
 import android.graphics.PointF
+import android.util.Log
 import android.view.View
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -14,6 +15,8 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import android.view.WindowManager
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
+import com.floatingview.library.helpers.getScreenSizeWithoutInsets
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -26,32 +29,27 @@ fun CloseFloaty(
   isInvisible: Boolean? = true,
   content: @Composable BoxScope.() -> Unit
 ) {
+  val context = LocalContext.current
   val density = LocalDensity.current
   val configuration = LocalConfiguration.current
 
-  val screenSize = remember {
-    mutableStateOf(
-      IntSize(
-        with(density) { configuration.screenWidthDp.dp.roundToPx() },
-        with(density) { configuration.screenHeightDp.dp.roundToPx() }
-      )
-    )
-  }
-  val contentSize = remember { mutableStateOf(IntSize.Zero) }
+  var screenSize by remember { mutableStateOf(getScreenSizeWithoutInsets(context, density, configuration)) }
+  var contentSize by remember { mutableStateOf(IntSize.Zero) }
 
   if (isInvisible == true) {
-    LaunchedEffect(key1 = configuration, key2 = contentSize.value) {
-      val newScreenWidth = with(density) { configuration.screenWidthDp.dp.roundToPx() }
-      val newScreenHeight = with(density) { configuration.screenHeightDp.dp.roundToPx() }
-      screenSize.value = IntSize(newScreenWidth, newScreenHeight)
+    LaunchedEffect(key1 = configuration, key2 = contentSize) {
+      val oldScreenSize = screenSize
+      val newScreenSize = getScreenSizeWithoutInsets(context, density, configuration)
+      screenSize = newScreenSize
 
-      if (contentSize.value != IntSize.Zero) {
+      if (contentSize != IntSize.Zero) {
         val botPaddingPx = with(density) { 16.dp.toPx() }
         val newPoint = Point(
-          (newScreenWidth / 2) - (contentSize.value.width / 2),
-          newScreenHeight - contentSize.value.height - botPaddingPx.toInt()
+          (newScreenSize.width / 2) - (contentSize.width / 2),
+          newScreenSize.height - contentSize.height - botPaddingPx.toInt()
         )
 
+        Log.d("CloseFloaty", "about to update view, newPoint: $newPoint")
         windowManager.updateViewLayout(containerView, layoutParams.apply {
           x = newPoint.x
           y = newPoint.y
@@ -65,7 +63,8 @@ fun CloseFloaty(
   Box(
     modifier = modifier
       .onSizeChanged { size ->
-        contentSize.value = size
+        Log.d("❌", "closeFloaty size: $size")
+        contentSize = size
         layoutParams.width = size.width
         layoutParams.height = size.height
         windowManager.updateViewLayout(containerView, layoutParams)
@@ -75,8 +74,8 @@ fun CloseFloaty(
   }
 }
 
-fun isWithinCloseArea(floatyCenterPointF: PointF, closeCenterPointF: PointF, closeThreshold: Float): Boolean {
-  return distance(floatyCenterPointF, closeCenterPointF) <= closeThreshold
+fun isWithinCloseArea(floatyCenterPointF: PointF, closeCenterPointF: PointF, closingThreshold: Float): Boolean {
+  return distance(floatyCenterPointF, closeCenterPointF) <= closingThreshold
 }
 
 private fun distance(pointA: PointF, pointB: PointF): Float {

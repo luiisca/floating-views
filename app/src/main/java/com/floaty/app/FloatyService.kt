@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.Point
 import android.graphics.PointF
 import android.os.IBinder
+import com.floatingview.library.CloseBehavior
 import com.floatingview.library.CloseFloatyConfig
 import com.floatingview.library.FloatiesBuilder
 import com.floatingview.library.MainFloatyConfig
@@ -21,13 +22,14 @@ class FloatyService : Service() {
 
     floatiesBuilder = FloatiesBuilder(
       this,
+      enableAnimations = false,
       mainFloatyConfig = MainFloatyConfig(
         composable = {FloatView()},
-        enableAnimations = false,
-        isSnapToEdgeEnabled = false,
+//        isSnapToEdgeEnabled = false,
       ),
       closeFloatyConfig = CloseFloatyConfig(
-        startPointDp = PointF(100f, 200f)
+//        startPointDp = PointF(100f, 200f),
+//        closeBehavior = CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT
       )
     )
 

@@ -40,5 +40,4 @@ dependencies {
   implementation(libs.androidx.dynamic.animation)
   implementation(libs.androidx.saved.state)
   implementation(libs.androidx.compose.foundation)
-  implementation(libs.screen.easy)
 }
