@@ -14,6 +14,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -89,6 +90,7 @@ fun MainFloaty(
         layoutParams.height = size.height
         windowManager.updateViewLayout(containerView, layoutParams)
       }
+      .systemGestureExclusion()
       .pointerInput(Unit) {
         detectTapGestures(
           onTap = { offset ->
