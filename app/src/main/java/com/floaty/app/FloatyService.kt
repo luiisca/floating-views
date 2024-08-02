@@ -3,8 +3,6 @@ package com.floaty.app
 import FloatView
 import android.app.Service
 import android.content.Intent
-import android.graphics.Point
-import android.graphics.PointF
 import android.os.IBinder
 import com.floatingview.library.CloseBehavior
 import com.floatingview.library.CloseFloatyConfig
@@ -22,14 +20,23 @@ class FloatyService : Service() {
 
     floatiesBuilder = FloatiesBuilder(
       this,
-      enableAnimations = false,
+//      enableAnimations = false,
       mainFloatyConfig = MainFloatyConfig(
         composable = {FloatView()},
 //        isSnapToEdgeEnabled = false,
+//        startPointDp = PointF(100f, 200f)
       ),
       closeFloatyConfig = CloseFloatyConfig(
-//        startPointDp = PointF(100f, 200f),
-//        closeBehavior = CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT
+//        viewFactory = { context ->
+//          View(context).apply {
+//            layoutParams = ViewGroup.LayoutParams(100, 100)
+//            setBackgroundResource(com.floatingview.library.R.drawable.round_bubble_chart_24)
+//          }
+//        },
+//        startPointDp = PointF(240f, 600f),
+//        mountThresholdDp = 50f,
+//        closingThresholdDp = 30f,
+        closeBehavior = CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT,
       )
     )
 
