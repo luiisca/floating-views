@@ -4,8 +4,10 @@ import FloatView
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import android.util.Log
 import com.floatingview.library.CloseBehavior
 import com.floatingview.library.CloseFloatyConfig
+import com.floatingview.library.ExpandedFloatyConfig
 import com.floatingview.library.FloatiesBuilder
 import com.floatingview.library.MainFloatyConfig
 
@@ -37,6 +39,9 @@ class FloatyService : Service() {
 //        mountThresholdDp = 50f,
 //        closingThresholdDp = 30f,
         closeBehavior = CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT,
+      ),
+      expandedFloatyConfig = ExpandedFloatyConfig(
+        composable = {hide -> ExtendedView(hide)},
       )
     )
 

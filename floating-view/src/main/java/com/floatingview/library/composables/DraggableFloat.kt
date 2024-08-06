@@ -1,7 +1,11 @@
 package com.floatingview.library.composables
 
+import android.annotation.SuppressLint
 import android.graphics.Point
 import android.graphics.PointF
+import android.util.Log
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -10,12 +14,14 @@ import androidx.compose.animation.core.animateInt
 import androidx.compose.animation.core.calculateTargetValue
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.splineBasedDecay
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,11 +37,14 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.floatingview.library.CloseBehavior
 import com.floatingview.library.CloseFloatyConfig
+import com.floatingview.library.DraggableType
+import com.floatingview.library.ExpandedFloatyConfig
 import com.floatingview.library.MainFloatyConfig
 import com.floatingview.library.helpers.getScreenSizeWithoutInsets
 import kotlin.math.abs
@@ -54,8 +63,10 @@ enum class InterruptMovState {
   CLOSE_DRAGGING,
 }
 
+@SuppressLint("ClickableViewAccessibility")
 @Composable
-fun MainFloaty(
+fun DraggableFloat(
+  type: DraggableType,
   windowManager: WindowManager,
   containerView: ComposeView,
   closeContainerView: ComposeView,
@@ -63,8 +74,10 @@ fun MainFloaty(
   closeLayoutParams: WindowManager.LayoutParams,
   modifier: Modifier = Modifier,
   enableAnimations: Boolean? = true,
-  config: MainFloatyConfig,
+  mainConfig: MainFloatyConfig,
+  expandedConfig: ExpandedFloatyConfig,
   closeConfig: CloseFloatyConfig,
+  openExpandedView: (() -> Unit)? = null,
   content: @Composable BoxScope.() -> Unit,
 ) {
   val context = LocalContext.current
@@ -94,12 +107,24 @@ fun MainFloaty(
       .pointerInput(Unit) {
         detectTapGestures(
           onTap = { offset ->
-            config.onTap?.let { it(offset) }
+            when (type) {
+              DraggableType.MAIN -> {
+                if (expandedConfig.enabled) {
+                  openExpandedView?.let { it() }
+                }
+                mainConfig.onTap?.let { it(offset) }
+              }
+
+              DraggableType.EXTENDED -> {
+                expandedConfig.onTap?.let { it(offset) }
+                Log.d("pointerInput", "tapped!!")
+              }
+            }
           }
         )
       }
       .let { mod ->
-        var dragAmountState by remember {mutableStateOf<Offset?>(null)}
+        var dragAmountState by remember { mutableStateOf<Offset?>(null) }
 
         var crrPoint by remember { mutableStateOf(Point(layoutParams.x, layoutParams.y)) }
         var animPoint by remember { mutableStateOf(Point(layoutParams.x, layoutParams.y)) }
@@ -141,7 +166,7 @@ fun MainFloaty(
           screenSize = newScreenSize
 
           // snap to edge
-          if (config.isSnapToEdgeEnabled == true
+          if (mainConfig.isSnapToEdgeEnabled
             && oldScreenSize.width != 0 && oldScreenSize.height != 0
           ) {
             val wasOnRightEdge = crrPoint.x + contentSize.width >= oldScreenSize.width
@@ -175,7 +200,7 @@ fun MainFloaty(
 
         // update close point when orientation changes and close float is visible to adapt it to
         // new screenSize and crrPoint
-        if (closeConfig.enabled == true
+        if (closeConfig.enabled
           && isCloseVisible
           && contentSize != IntSize.Zero
           && dragAmountState != null
@@ -188,7 +213,7 @@ fun MainFloaty(
 
             if (oldScreenSize.width != newScreenSize.width ||
               oldScreenSize.height != newScreenSize.height
-              ) {
+            ) {
               // adapt initialClosePoint to new screen orientation
               initialClosePoint = getCloseInitialPoint(
                 density = density,
@@ -228,9 +253,9 @@ fun MainFloaty(
         if (enableAnimations == true) {
           val transition = updateTransition(targetState = animPoint, label = "point transition")
           transitionSpec = when (animationState) {
-            AnimationState.SNAP_TO_EDGE -> config.snapToEdgeTransitionSpec
-            AnimationState.SNAP_TO_CLOSE -> config.snapToCloseTransitionSpec
-            AnimationState.DRAGGING -> config.draggingTransitionSpec
+            AnimationState.SNAP_TO_EDGE -> mainConfig.snapToEdgeTransitionSpec
+            AnimationState.SNAP_TO_CLOSE -> mainConfig.snapToCloseTransitionSpec
+            AnimationState.DRAGGING -> mainConfig.draggingTransitionSpec
           }
 
           val animatedX by transition.animateInt(
@@ -247,7 +272,10 @@ fun MainFloaty(
               x = animatedX
               y = animatedY
             })
-            config.onDrag?.invoke(
+            (when (type) {
+              DraggableType.MAIN -> mainConfig
+              DraggableType.EXTENDED -> expandedConfig
+            }).onDrag?.invoke(
               newChange!!,
               newDragAmount!!,
               crrPoint,
@@ -258,8 +286,9 @@ fun MainFloaty(
             )
           }
 
-          if (closeConfig.enabled == true && closeAnimPoint != null && isCloseMounted) {
-            val closeTransition = updateTransition(targetState = closeAnimPoint!!, label = "close point transition")
+          if (closeConfig.enabled && closeAnimPoint != null && isCloseMounted) {
+            val closeTransition =
+              updateTransition(targetState = closeAnimPoint!!, label = "close point transition")
             closeTransitionSpec = when (closeAnimationState) {
               CloseAnimationState.DRAGGING -> closeConfig.draggingTransitionSpec
               CloseAnimationState.SNAP_TO_MAIN -> closeConfig.snapToMainTransitionSpec
@@ -292,17 +321,26 @@ fun MainFloaty(
 
           detectDragGestures(
             onDragStart = { offset ->
-              config.onDragStart?.let { it(offset) }
+              (when (type) {
+                DraggableType.MAIN -> mainConfig
+                DraggableType.EXTENDED -> expandedConfig
+              }).onDragStart?.let { it(offset) }
             },
             onDrag = { change, dragAmount ->
               dragAmountState = dragAmount
               crrPoint = Point(
-                (crrPoint.x + dragAmount.x.toInt()).coerceIn(0, screenSize.width - contentSize.width),
-                (crrPoint.y + dragAmount.y.toInt()).coerceIn(0, screenSize.height - contentSize.height)
+                (crrPoint.x + dragAmount.x.toInt()).coerceIn(
+                  0,
+                  screenSize.width - contentSize.width
+                ),
+                (crrPoint.y + dragAmount.y.toInt()).coerceIn(
+                  0,
+                  screenSize.height - contentSize.height
+                )
               )
 
               // MOUNT CLOSE LOGIC
-              if (closeConfig.enabled == true) {
+              if (closeConfig.enabled) {
                 if (!isCloseMounted && (abs(dragAmount.x) > mountThreshold || abs(dragAmount.y) > mountThreshold)) {
                   closeContainerView.visibility = View.INVISIBLE
                   windowManager.addView(closeContainerView, closeLayoutParams)
@@ -311,7 +349,7 @@ fun MainFloaty(
                 if (isCloseMounted
                   && !isCloseVisible
                   && (closeContainerView.width > 0 || closeContainerView.height > 0)
-                  ) {
+                ) {
 
                   if (closeContentSize == null) {
                     closeContentSize = IntSize(closeContainerView.width, closeContainerView.height)
@@ -361,7 +399,7 @@ fun MainFloaty(
               //
 
               // CLOSING LOGIC
-              if (closeConfig.enabled == true) {
+              if (closeConfig.enabled) {
                 if (closeCenterPoint != null) {
                   val wasWithinCloseArea = withinCloseArea
 
@@ -446,7 +484,7 @@ fun MainFloaty(
               //
 
               // DRAGGING CLOSE FLOAT LOGIC
-              if (closeConfig.enabled == true
+              if (closeConfig.enabled
                 && isCloseVisible
                 && interruptMovState != InterruptMovState.CLOSE_DRAGGING
                 && closeConfig.closeBehavior == CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT
@@ -501,12 +539,15 @@ fun MainFloaty(
               //
 
               // SNAP TO EDGE LOGIC
-              if (enableAnimations == true && config.isSnapToEdgeEnabled == true) {
+              if (enableAnimations == true && mainConfig.isSnapToEdgeEnabled) {
                 velocityTracker.addPosition(change.uptimeMillis, change.position)
               }
               //
 
-              config.onDrag?.invoke(
+              (when (type) {
+                DraggableType.MAIN -> mainConfig
+                DraggableType.EXTENDED -> expandedConfig
+              }).onDrag?.invoke(
                 change,
                 dragAmount,
                 crrPoint,
@@ -514,7 +555,7 @@ fun MainFloaty(
               )
             },
             onDragEnd = {
-              if (closeConfig.enabled == true && isCloseMounted && isCloseVisible) {
+              if (closeConfig.enabled && isCloseMounted && isCloseVisible) {
                 windowManager.removeView(closeContainerView)
                 isCloseMounted = false
                 isCloseVisible = false
@@ -525,7 +566,7 @@ fun MainFloaty(
                 // remove bottom back
               }
 
-              if (config.isSnapToEdgeEnabled == true) {
+              if (mainConfig.isSnapToEdgeEnabled) {
                 if (enableAnimations == true) {
                   animationState = AnimationState.SNAP_TO_EDGE
 
@@ -560,7 +601,10 @@ fun MainFloaty(
                   crrPoint = newPoint
                 }
               }
-              config.onDragEnd?.let { it() }
+              (when (type) {
+                DraggableType.MAIN -> mainConfig
+                DraggableType.EXTENDED -> expandedConfig
+              }).onDragEnd?.let { it() }
             }
           )
         }
@@ -584,10 +628,6 @@ private fun followFloat(
   val followerInitialCenter = PointF(
     followerInitialPoint.x + followerContentSize.width / 2f,
     followerInitialPoint.y + followerContentSize.height / 2f
-  )
-  val followerCrrCenter = PointF(
-    followerCrrPoint.x + followerContentSize.width / 2f,
-    followerCrrPoint.y + followerContentSize.height / 2f
   )
   val targetCrrCenter = PointF(
     targetCrrPoint.x + targetContentSize.width / 2f,
