@@ -5,6 +5,7 @@ import android.graphics.PixelFormat
 import android.graphics.Point
 import android.graphics.PointF
 import android.os.Build
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -13,20 +14,37 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.floatingview.library.composables.CloseFloaty
 import com.floatingview.library.composables.DraggableFloat
+import com.floatingview.library.composables.FullscreenOverlayFloat
 import com.floatingview.library.helpers.NotificationHelper
+import com.floatingview.library.helpers.getScreenSizeWithoutInsets
+import com.floatingview.library.helpers.toDp
 import com.floatingview.library.helpers.toPx
 
 enum class CloseBehavior {
@@ -132,6 +150,7 @@ data class MainFloatyConfig(
 
 /**
  * @property enabled Determines if the expanded floating view is active.
+ * @property tapOutsideToClose Determines if tapping outside of expanded view should close it.
  * @property composable Jetpack Compose function defining the content of the expanded view.
  * Call hide to remove expanded view and add main view to windowManager again
  * @property viewFactory A function that creates an Android View to be displayed in the floating view.
@@ -141,8 +160,9 @@ data class MainFloatyConfig(
  */
 data class ExpandedFloatyConfig(
     val enabled: Boolean = true,
+    val tapOutsideToClose: Boolean = true,
     val dimAmount: Float = 0.5f,
-    val composable: (@Composable (hide: () -> Unit) -> Unit)? = null,
+    val composable: (@Composable (close: () -> Unit) -> Unit)? = null,
     val viewFactory: ((context: Context, hide:() -> Unit) -> View)? = null,
     override var startPointDp: PointF? = null,
     override var startPointPx: PointF? = null,
@@ -260,26 +280,24 @@ data class CloseFloatyConfig(
     var followRate: Float = 0.1f,
 )
 
-data class BottomBackConfig(
-    val composable: (@Composable () -> Unit)? = null,
-    val view: View? = null,
-    val enabled: Boolean? = true
-)
-
 class FloatiesBuilder(
     private val context: Context,
     private val enableAnimations: Boolean = true,
     private val mainFloatyConfig: MainFloatyConfig = MainFloatyConfig(),
     private val closeFloatyConfig: CloseFloatyConfig = CloseFloatyConfig(),
     private val expandedFloatyConfig: ExpandedFloatyConfig = ExpandedFloatyConfig(),
-    private val bottomBackConfig: BottomBackConfig = BottomBackConfig()
 ) {
     private val composeOwner = FloatyLifecycleOwner()
     private var isComposeOwnerInit: Boolean = false
     private val windowManager = context.getSystemService(Service.WINDOW_SERVICE) as WindowManager
 
+    init {
+        if (closeFloatyConfig.enabled) {
+            createCloseView()
+        }
+    }
+
     private lateinit var closeContainerView: ComposeView
-    private lateinit var containerView: ComposeView
     private lateinit var closeLayoutParams: WindowManager.LayoutParams
 
     fun startForegroundWithDefaultNotification(icon: Int = R.drawable.round_bubble_chart_24, title: String = "Floaty is running") {
@@ -289,133 +307,22 @@ class FloatiesBuilder(
 
         service.startForeground(notificationHelper.notificationId, notificationHelper.createDefaultNotification(icon, title))
     }
-    fun setup(context: Service) {
-        // 1. create close and bottombackground (if active)
-        if (closeFloatyConfig.enabled) {
-            createCloseView()
-        }
-    }
     fun addFloaty() {
-        createMainView()
+        Log.d("FloatiesBuilder", "closeContainerView: $closeContainerView")
+        CreatFloatViews(
+            context,
+            enableAnimations,
+            mainFloatyConfig,
+            expandedFloatyConfig,
+            closeFloatyConfig,
+            addToComposeLifecycle = { composable ->
+                addToComposeLifecycle(composable)
+            },
+            closeContainerView,
+            closeLayoutParams
+        )
     }
 
-    private fun createMainView(point: Point? = null, expandedLayoutParams: WindowManager.LayoutParams? = null) {
-        val startPoint = point
-          ?: Point(
-              (mainFloatyConfig.startPointDp?.x?.toPx() ?: mainFloatyConfig.startPointPx?.x ?: 0f).toInt(),
-              (mainFloatyConfig.startPointDp?.y?.toPx() ?: mainFloatyConfig.startPointPx?.y ?: 0f).toInt()
-          )
-        val layoutParams = baseLayoutParams().apply {
-            flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
-            x = startPoint.x
-            y = startPoint.y
-        }
-
-        // Composable
-        val mainFloaty = ComposeView(context).apply {
-            containerView = this
-            this.setContent {
-                DraggableFloat(
-                    type = DraggableType.MAIN,
-                    windowManager = windowManager,
-                    containerView = this,
-                    closeContainerView = closeContainerView,
-                    layoutParams = layoutParams,
-                    closeLayoutParams = closeLayoutParams,
-                    enableAnimations = enableAnimations,
-                    mainConfig = mainFloatyConfig,
-                    closeConfig = closeFloatyConfig,
-                    expandedConfig = expandedFloatyConfig,
-                    openExpandedView = {
-                        windowManager.removeView(this)
-                        val expandedPoint = if (expandedLayoutParams != null) {
-                            Point(expandedLayoutParams.x, expandedLayoutParams.y)
-                        } else {
-                            null
-                        }
-                        createExpandedView(expandedPoint, layoutParams)
-                    },
-                ) {
-                    when {
-                        mainFloatyConfig.viewFactory != null -> mainFloatyConfig.viewFactory.let { factory ->
-                            AndroidView(
-                                factory = { context ->
-                                    factory(context)
-                                }
-                            )
-                        }
-                        mainFloatyConfig.composable != null -> mainFloatyConfig.composable.invoke()
-                        else -> throw IllegalArgumentException("Either compose or view must be provided for MainFloaty")
-                    }
-                }
-            }
-        }
-
-        composeOwnerLifecycle(mainFloaty)
-        windowManager.addView(mainFloaty, layoutParams)
-    }
-
-    private fun createExpandedView(point: Point? = null, mainLayoutParams: WindowManager.LayoutParams) {
-        val startPoint = point
-            ?: Point(
-                (expandedFloatyConfig.startPointDp?.x?.toPx() ?: expandedFloatyConfig.startPointPx?.x ?: 0f).toInt(),
-                (expandedFloatyConfig.startPointDp?.y?.toPx() ?: expandedFloatyConfig.startPointPx?.y ?: 0f).toInt()
-            )
-        val expandedLayoutParams = baseLayoutParams().apply {
-            flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
-                    WindowManager.LayoutParams.FLAG_DIM_BEHIND
-//            format = PixelFormat.TRANSLUCENT
-            dimAmount = expandedFloatyConfig.dimAmount
-            x = startPoint.x
-            y = startPoint.y
-        }
-
-        // Composable
-        lateinit var expandedView: ComposeView
-        val expandedFloaty = ComposeView(context).apply {
-            expandedView = this
-            this.setContent {
-                DraggableFloat(
-                    type = DraggableType.EXTENDED,
-                    windowManager = windowManager,
-                    containerView = this,
-                    closeContainerView = closeContainerView,
-                    layoutParams = expandedLayoutParams,
-                    closeLayoutParams = closeLayoutParams,
-                    enableAnimations = enableAnimations,
-                    mainConfig = mainFloatyConfig,
-                    closeConfig = closeFloatyConfig,
-                    expandedConfig = expandedFloatyConfig,
-                ) {
-                    when {
-                        expandedFloatyConfig.viewFactory != null -> expandedFloatyConfig.viewFactory.let { factory ->
-                            AndroidView(
-                                factory = { context ->
-                                    factory(context) {
-                                        windowManager.removeView(expandedView)
-                                        createMainView(Point(mainLayoutParams.x, mainLayoutParams.y), expandedLayoutParams)
-                                    }
-                                }
-                            )
-                        }
-                        expandedFloatyConfig.composable != null -> expandedFloatyConfig.composable.let {composable ->
-                            composable {
-                                windowManager.removeView(expandedView)
-                                createMainView(Point(mainLayoutParams.x, mainLayoutParams.y), expandedLayoutParams)
-                            }
-                        }
-
-                        else -> throw IllegalArgumentException("Either compose or view must be provided for MainFloaty")
-                    }
-                }
-            }
-        }
-
-        composeOwnerLifecycle(expandedFloaty)
-        windowManager.addView(expandedView, expandedLayoutParams)
-    }
 
     private fun createCloseView() {
         closeLayoutParams = baseLayoutParams().apply {
@@ -446,30 +353,10 @@ class FloatiesBuilder(
             }
         }
 
-        composeOwnerLifecycle(closeFloaty)
+        addToComposeLifecycle(closeFloaty)
     }
 
-    private fun createBottomView() {
-
-    }
-
-    private fun baseLayoutParams(): WindowManager.LayoutParams {
-        return WindowManager.LayoutParams().apply {
-            width = WindowManager.LayoutParams.WRAP_CONTENT
-            height = WindowManager.LayoutParams.WRAP_CONTENT
-
-            gravity = Gravity.TOP or Gravity.LEFT
-            format = PixelFormat.TRANSLUCENT
-
-            type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            } else {
-                WindowManager.LayoutParams.TYPE_PHONE
-            }
-        }
-    }
-
-    private fun composeOwnerLifecycle(composable: ComposeView) {
+    fun addToComposeLifecycle(composable: ComposeView) {
         composeOwner.attachToDecorView(composable)
         if (!isComposeOwnerInit) {
             composeOwner.onCreate()
@@ -481,6 +368,184 @@ class FloatiesBuilder(
     }
 }
 
+class CreatFloatViews(
+    private val context: Context,
+    private val enableAnimations: Boolean,
+    private val mainFloatyConfig: MainFloatyConfig = MainFloatyConfig(),
+    private val expandedFloatyConfig: ExpandedFloatyConfig,
+    private val closeFloatyConfig: CloseFloatyConfig,
+    private val addToComposeLifecycle: (composable: ComposeView) -> Unit,
+    private val closeContainerView: ComposeView,
+    private val closeLayoutParams: WindowManager.LayoutParams,
+) {
+    private val windowManager = context.getSystemService(Service.WINDOW_SERVICE) as WindowManager
+    var mainView: ComposeView? = null
+    var expandedView: ComposeView? = null
+    var overlayView: ComposeView? = null
+    val mainStartPoint = Point(
+            (mainFloatyConfig.startPointDp?.x?.toPx() ?: mainFloatyConfig.startPointPx?.x ?: 0f).toInt(),
+            (mainFloatyConfig.startPointDp?.y?.toPx() ?: mainFloatyConfig.startPointPx?.y ?: 0f).toInt()
+        )
+    val expandedStartPoint = Point(
+        (expandedFloatyConfig.startPointDp?.x?.toPx() ?: expandedFloatyConfig.startPointPx?.x ?: 0f).toInt(),
+        (expandedFloatyConfig.startPointDp?.y?.toPx() ?: expandedFloatyConfig.startPointPx?.y ?: 0f).toInt()
+    )
+    val mainLayoutParams = baseLayoutParams().apply {
+        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+        x = mainStartPoint.x
+        y = mainStartPoint.y
+    }
+    val expandedLayoutParams = baseLayoutParams().apply {
+        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
+                WindowManager.LayoutParams.FLAG_DIM_BEHIND
+        dimAmount = expandedFloatyConfig.dimAmount
+        x = expandedStartPoint.x
+        y = expandedStartPoint.y
+    }
+    val overlayLayoutParams = WindowManager.LayoutParams().apply {
+        type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        } else {
+            WindowManager.LayoutParams.TYPE_PHONE
+        }
+        format = PixelFormat.TRANSLUCENT
+    }
+
+    var isOverlayVisible = false
+    var isExpandedVisible = false
+    var isMainVisible = false
+
+
+    init {
+        createMainView()
+    }
+
+    private fun createMainView() {
+        val mainFloaty = ComposeView(context).apply {
+            mainView = this
+            this.setContent {
+                DraggableFloat(
+                    type = DraggableType.MAIN,
+                    windowManager = windowManager,
+                    containerView = mainView!!,
+                    closeContainerView = closeContainerView,
+                    layoutParams = mainLayoutParams,
+                    closeLayoutParams = closeLayoutParams,
+                    enableAnimations = enableAnimations,
+                    mainConfig = mainFloatyConfig,
+                    closeConfig = closeFloatyConfig,
+                    expandedConfig = expandedFloatyConfig,
+                    openExpandedView = { openExpanded() },
+                    onClose = { tryCloseMain() }
+                ) {
+                    when {
+                        mainFloatyConfig.viewFactory != null -> mainFloatyConfig.viewFactory.let { viewFactory ->
+                            AndroidView(
+                                factory = { context ->
+                                    viewFactory(context)
+                                }
+                            )
+                        }
+                        mainFloatyConfig.composable != null -> mainFloatyConfig.composable.invoke()
+                        else -> throw IllegalArgumentException("Either compose or view must be provided for MainFloaty")
+                    }
+                }
+            }
+        }
+
+        addToComposeLifecycle(mainFloaty)
+        windowManager.addView(mainFloaty, mainLayoutParams)
+        isMainVisible = true
+    }
+
+    private fun createExpandedView() {
+        val expandedFloaty = ComposeView(context).apply {
+            expandedView = this
+            this.setContent {
+                DraggableFloat(
+                    type = DraggableType.EXTENDED,
+                    windowManager = windowManager,
+                    containerView = expandedView!!,
+                    closeContainerView = closeContainerView,
+                    layoutParams = expandedLayoutParams,
+                    closeLayoutParams = closeLayoutParams,
+                    enableAnimations = enableAnimations,
+                    mainConfig = mainFloatyConfig,
+                    closeConfig = closeFloatyConfig,
+                    expandedConfig = expandedFloatyConfig,
+                    onClose = { tryCloseExpanded(openMainAfter = false) }
+                ) {
+                    when {
+                        expandedFloatyConfig.viewFactory != null -> expandedFloatyConfig.viewFactory.let { viewFactory ->
+                            AndroidView(
+                                factory = { context ->
+                                    viewFactory(context) { tryCloseExpanded() }
+                                }
+                            )
+                        }
+                        expandedFloatyConfig.composable != null -> expandedFloatyConfig.composable.let {composable ->
+                            composable { tryCloseExpanded() }
+                        }
+
+                        else -> throw IllegalArgumentException("Either compose or view must be provided for MainFloaty")
+                    }
+                }
+            }
+        }
+
+        addToComposeLifecycle(expandedFloaty)
+        windowManager.addView(expandedView, expandedLayoutParams)
+        isExpandedVisible = true
+    }
+
+    private fun tryCreateOverlayView() {
+        if (expandedFloatyConfig.tapOutsideToClose) {
+            val overlayFloat = ComposeView(context).apply {
+                overlayView = this
+                this.setContent {
+                    FullscreenOverlayFloat(
+                        onTap = { tryCloseExpanded() }
+                    )
+                }
+            }
+
+            addToComposeLifecycle(overlayFloat)
+            windowManager.addView(overlayView, overlayLayoutParams)
+            isOverlayVisible = true
+        }
+    }
+
+    private fun openExpanded() {
+        tryCloseMain()
+        tryCreateOverlayView()
+        createExpandedView()
+    }
+    private fun tryCloseMain() {
+        if (mainView != null && isMainVisible) {
+            windowManager.removeView(mainView)
+            isMainVisible = false
+        }
+    }
+    private fun tryCloseExpanded(openMainAfter: Boolean = true) {
+        if (expandedView != null && isExpandedVisible) {
+            windowManager.removeView(expandedView)
+            isExpandedVisible = false
+        }
+
+        tryCloseOverlay()
+        if (openMainAfter) {
+            createMainView()
+        }
+    }
+    private fun tryCloseOverlay() {
+        if (overlayView != null && isOverlayVisible) {
+            windowManager.removeView(overlayView)
+            isOverlayVisible = false
+        }
+    }
+}
 @Composable
 private fun DefaultCloseButton() {
     Box(
@@ -492,5 +557,21 @@ private fun DefaultCloseButton() {
             contentDescription = "Close floaty view",
             modifier = Modifier.size(60.dp)
         )
+    }
+}
+
+private fun baseLayoutParams(): WindowManager.LayoutParams {
+    return WindowManager.LayoutParams().apply {
+        width = WindowManager.LayoutParams.WRAP_CONTENT
+        height = WindowManager.LayoutParams.WRAP_CONTENT
+
+        gravity = Gravity.TOP or Gravity.LEFT
+        format = PixelFormat.TRANSLUCENT
+
+        type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        } else {
+            WindowManager.LayoutParams.TYPE_PHONE
+        }
     }
 }

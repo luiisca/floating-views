@@ -4,8 +4,6 @@ import android.annotation.SuppressLint
 import android.graphics.Point
 import android.graphics.PointF
 import android.util.Log
-import android.view.GestureDetector
-import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -14,14 +12,12 @@ import androidx.compose.animation.core.animateInt
 import androidx.compose.animation.core.calculateTargetValue
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.splineBasedDecay
-import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,10 +33,10 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.floatingview.library.CloseBehavior
 import com.floatingview.library.CloseFloatyConfig
 import com.floatingview.library.DraggableType
@@ -63,7 +59,6 @@ enum class InterruptMovState {
   CLOSE_DRAGGING,
 }
 
-@SuppressLint("ClickableViewAccessibility")
 @Composable
 fun DraggableFloat(
   type: DraggableType,
@@ -78,6 +73,7 @@ fun DraggableFloat(
   expandedConfig: ExpandedFloatyConfig,
   closeConfig: CloseFloatyConfig,
   openExpandedView: (() -> Unit)? = null,
+  onClose: (() -> Unit)? = null,
   content: @Composable BoxScope.() -> Unit,
 ) {
   val context = LocalContext.current
@@ -97,6 +93,7 @@ fun DraggableFloat(
 
   Box(
     modifier = modifier
+      .zIndex(10f)
       .onSizeChanged { size ->
         contentSize = size
         layoutParams.width = size.width
@@ -561,7 +558,7 @@ fun DraggableFloat(
                 isCloseVisible = false
 
                 if (withinCloseArea) {
-                  windowManager.removeView(containerView)
+                  onClose?.let { it() }
                 }
                 // remove bottom back
               }

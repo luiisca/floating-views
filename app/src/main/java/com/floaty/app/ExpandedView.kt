@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,13 +16,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ExtendedView(hide: () -> Unit) {
+fun ExtendedView(close: () -> Unit) {
   val color = remember { mutableStateOf(randomColor()) }
 
   Box(modifier = Modifier
     .size(200.dp)
     .background(color.value, shape = CircleShape)) {
-    Button(onClick = { hide() }) {
+    Button(onClick = { close() }) {
       Icon(
         imageVector = Icons.Default.Close,
         contentDescription = "Hide expandedFloatyConfiged view",

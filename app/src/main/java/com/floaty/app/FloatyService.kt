@@ -41,13 +41,14 @@ class FloatyService : Service() {
         closeBehavior = CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT,
       ),
       expandedFloatyConfig = ExpandedFloatyConfig(
-        composable = {hide -> ExtendedView(hide)},
+        composable = {close -> ExtendedView(close)},
+//        tapOutsideToClose = false,
+//        dimAmount = 0.0f
       )
     )
 
     // can be omitted for service.startForeground with custom notification or just pass custom properties
     floatiesBuilder.startForegroundWithDefaultNotification()
-    floatiesBuilder.setup(this)
   }
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
