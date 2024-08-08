@@ -58,7 +58,11 @@ enum class DraggableType {
 
 /**
  * @property startPointDp Initial position of the floating view in density-independent pixels (dp).
+ *
+ * When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used
  * @property startPointPx Initial position of the floating view in pixels (px).
+ *
+ * When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used
  * @property draggingTransitionSpec Animation specification for dragging.
  *                                  Applied when `enableAnimations == true`.
  *
@@ -203,19 +207,35 @@ data class ExpandedFloatyConfig(
  * @property viewFactory A function that creates an Android View to be displayed in the close floating view.
  * This is an alternative to using a Composable.
  * @property startPointDp The initial position of the close floating view in density-independent pixels (dp).
+ *
+ * When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used
  * @property startPointPx The initial position of the close floating view in pixels (px).
+ *
+ * When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used
  * @property mountThresholdDp The drag distance required to show the close float, in density-independent pixels (dp).
  *                            A larger value requires more dragging before the close float becomes visible.
+ *
+ * When neither `mountThresholdDp` nor `mountThresholdPx` are provided `1.dp` is used
  * @property mountThresholdPx The drag distance required to show the close float, in pixels (px).
  *                            A larger value requires more dragging before the close float becomes visible.
+ *
+ * When neither `mountThresholdDp` nor `mountThresholdPx` are provided `1.dp` is used
  * @property closingThresholdDp The distance (in density-independent pixels) between the main float
  * and the close float that triggers the `closeBehavior`.
+ *
+ * When neither `closingThresholdDp` nor `closingThresholdPx` are provided `100.dp` is used
  * @property closingThresholdPx The distance (in pixels) between the main float and the close float
  * that triggers the `closeBehavior`.
+ *
+ * When neither `closingThresholdDp` nor `closingThresholdPx` are provided `100.dp` is used
  * @property bottomPaddingDp The bottom padding for the close float in density-independent pixels (dp).
  *                           Applied only when neither `startPointDp` nor `startPointPx` is specified.
+ *
+ * When neither `bottomPaddingDp` nor `bottomPaddingPx` are provided `16.dp` is used
  * @property bottomPaddingPx The bottom padding for the close float in pixels (px).
  *                           Applied only when neither `startPointDp` nor `startPointPx` is specified.
+ *
+ * When neither `bottomPaddingDp` nor `bottomPaddingPx` are provided `16.dp` is used
  * @property draggingTransitionSpec Defines the animation for dragging the close float.
  * Used when `enableAnimations == true && closeConfig.closeBehavior == CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.
  *
@@ -257,13 +277,12 @@ data class CloseFloatyConfig(
     val viewFactory: ((Context) -> View)? = null,
     var startPointDp: PointF? = null,
     var startPointPx: PointF? = null,
-    // TODO: figure how to still handle default values without ignoring custom ones
-    val mountThresholdDp: Float = 1f,
-    val mountThresholdPx: Float = 5f,
-    val closingThresholdDp: Float = 100f,
-    val closingThresholdPx: Float = 100f,
-    val bottomPaddingDp: Float = 16f,
-    val bottomPaddingPx: Float = 48f,
+    val mountThresholdDp: Float? = null,
+    val mountThresholdPx: Float? = null,
+    val closingThresholdDp: Float? = null,
+    val closingThresholdPx: Float? = null,
+    val bottomPaddingDp: Float? = null,
+    val bottomPaddingPx: Float? = null,
     var draggingTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>) = {
         spring(
             dampingRatio = Spring.DampingRatioNoBouncy,

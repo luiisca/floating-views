@@ -136,12 +136,12 @@ fun DraggableFloat(
         var closeCenterPoint by remember { mutableStateOf<Point?>(null) }
         val mountThreshold = remember {
           with(density) {
-            closeConfig.mountThresholdDp?.dp?.toPx() ?: closeConfig.mountThresholdPx ?: 0f
+            closeConfig.mountThresholdDp?.dp?.toPx() ?: closeConfig.mountThresholdPx ?: 1f.dp.toPx()
           }
         }
         val closingThreshold = remember {
           with(density) {
-            closeConfig.closingThresholdDp?.dp?.toPx() ?: closeConfig.closingThresholdPx ?: 0f
+            closeConfig.closingThresholdDp?.dp?.toPx() ?: closeConfig.closingThresholdPx ?: 100f.dp.toPx()
           }
         }
 
