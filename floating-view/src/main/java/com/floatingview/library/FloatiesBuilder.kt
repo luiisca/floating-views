@@ -64,7 +64,8 @@ enum class DraggableType {
  *
  * When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used
  * @property draggingTransitionSpec Animation specification for dragging.
- *                                  Applied when `enableAnimations == true`.
+ *
+ * Applied when `enableAnimations == true`.
  *
  * Default:
  *
@@ -73,7 +74,8 @@ enum class DraggableType {
  *                                      stiffness = Spring.StiffnessHigh
  *                                  )
  * @property snapToEdgeTransitionSpec Animation specification for snapping to screen edge.
- *                                    Applied when `enableAnimations == true && isSnapToEdgeEnabled`.
+ *
+ * Applied when `enableAnimations == true && isSnapToEdgeEnabled`.
  *
  * Default:
  *
@@ -82,7 +84,8 @@ enum class DraggableType {
  *                                      stiffness = Spring.StiffnessMedium
  *                                    )
  * @property snapToCloseTransitionSpec Animation specification for snapping to close float.
- *                                     Applied when `enableAnimations == true &&
+ *
+ * Applied when `enableAnimations == true &&
  *                                     closeConfig.closeBehavior == CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT`.
  *
  * Default:
@@ -156,10 +159,12 @@ data class MainFloatyConfig(
  * @property enabled Determines if the expanded floating view is active.
  * @property tapOutsideToClose Determines if tapping outside of expanded view should close it.
  * @property composable Jetpack Compose function defining the content of the expanded view.
- * Call hide to remove expanded view and add main view to windowManager again
+ *
+ * Call close to remove expanded view (and overlay view if enabled) and add main view to windowManager again
  * @property viewFactory A function that creates an Android View to be displayed in the floating view.
  * This is an alternative to using a Composable.
- * Call hide to remove expanded view and add main view to windowManager again
+ *
+ * Call close to remove expanded view (and overlay view if enabled) and add main view to windowManager again
  * @property dimAmount This is the amount of dimming to apply behind expanded view. Range is from 1.0 for completely opaque to 0.0 for no dim.
  */
 data class ExpandedFloatyConfig(
@@ -167,7 +172,7 @@ data class ExpandedFloatyConfig(
     val tapOutsideToClose: Boolean = true,
     val dimAmount: Float = 0.5f,
     val composable: (@Composable (close: () -> Unit) -> Unit)? = null,
-    val viewFactory: ((context: Context, hide:() -> Unit) -> View)? = null,
+    val viewFactory: ((context: Context, close:() -> Unit) -> View)? = null,
     override var startPointDp: PointF? = null,
     override var startPointPx: PointF? = null,
     override var draggingTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>) = {
@@ -237,6 +242,7 @@ data class ExpandedFloatyConfig(
  *
  * When neither `bottomPaddingDp` nor `bottomPaddingPx` are provided `16.dp` is used
  * @property draggingTransitionSpec Defines the animation for dragging the close float.
+ *
  * Used when `enableAnimations == true && closeConfig.closeBehavior == CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.
  *
  * Default:
@@ -246,7 +252,8 @@ data class ExpandedFloatyConfig(
  *                                      stiffness = Spring.StiffnessHigh
  *                                  )
  * @property snapToMainTransitionSpec Defines the animation for the close float snapping to the main float.
- *                                    Used when `enableAnimations == true && closeConfig.closeBehavior == CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.
+ *
+ * Used when `enableAnimations == true && closeConfig.closeBehavior == CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.
  *
  * Default:
  *
@@ -267,7 +274,8 @@ data class ExpandedFloatyConfig(
  *                      Default: `CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT`
  *
  * @property followRate Controls the movement of the close float when following the main float.
- *                      Only used when `closeConfig.closeBehavior == CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.
+ *
+ * Only used when `closeConfig.closeBehavior == CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.
  *
  *                      Default: 0.1f
  */
@@ -327,7 +335,6 @@ class FloatiesBuilder(
         service.startForeground(notificationHelper.notificationId, notificationHelper.createDefaultNotification(icon, title))
     }
     fun addFloaty() {
-        Log.d("FloatiesBuilder", "closeContainerView: $closeContainerView")
         CreatFloatViews(
             context,
             enableAnimations,
@@ -565,6 +572,7 @@ class CreatFloatViews(
         }
     }
 }
+
 @Composable
 private fun DefaultCloseButton() {
     Box(
