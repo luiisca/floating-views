@@ -1,6 +1,5 @@
 package com.floatingview.library.composables
 
-import android.annotation.SuppressLint
 import android.graphics.Point
 import android.graphics.PointF
 import android.util.Log
@@ -16,6 +15,8 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerInputChange
@@ -65,8 +67,8 @@ fun DraggableFloat(
   windowManager: WindowManager,
   containerView: ComposeView,
   closeContainerView: ComposeView,
-  layoutParams: WindowManager.LayoutParams,
   closeLayoutParams: WindowManager.LayoutParams,
+  layoutParams: WindowManager.LayoutParams,
   modifier: Modifier = Modifier,
   enableAnimations: Boolean? = true,
   mainConfig: MainFloatyConfig,
@@ -92,14 +94,16 @@ fun DraggableFloat(
   var contentSize by remember { mutableStateOf(IntSize.Zero) }
 
   Box(
+    propagateMinConstraints = true,
     modifier = modifier
+      // TODO: test removing it
       .zIndex(10f)
       .onSizeChanged { size ->
         contentSize = size
-        layoutParams.width = size.width
-        layoutParams.height = size.height
         windowManager.updateViewLayout(containerView, layoutParams)
       }
+      .wrapContentWidth(Alignment.Start, unbounded = true)
+      .wrapContentHeight(Alignment.Top, unbounded = true)
       .systemGestureExclusion()
       .pointerInput(Unit) {
         detectTapGestures(
@@ -112,9 +116,8 @@ fun DraggableFloat(
                 mainConfig.onTap?.let { it(offset) }
               }
 
-              DraggableType.EXTENDED -> {
+              DraggableType.EXPANDED -> {
                 expandedConfig.onTap?.let { it(offset) }
-                Log.d("pointerInput", "tapped!!")
               }
             }
           }
@@ -141,7 +144,8 @@ fun DraggableFloat(
         }
         val closingThreshold = remember {
           with(density) {
-            closeConfig.closingThresholdDp?.dp?.toPx() ?: closeConfig.closingThresholdPx ?: 100f.dp.toPx()
+            closeConfig.closingThresholdDp?.dp?.toPx() ?: closeConfig.closingThresholdPx
+            ?: 100f.dp.toPx()
           }
         }
 
@@ -173,12 +177,12 @@ fun DraggableFloat(
             if (wasOnRightEdge) {
               crrPoint = Point(
                 newScreenSize.width - contentSize.width,
-                crrPoint.y.coerceIn(0, newScreenSize.height - contentSize.height)
+                crrPoint.y.coerceIn(0, coerceInMax(newScreenSize.height - contentSize.height))
               )
             }
             if (wasOnBottomEdge) {
               crrPoint = Point(
-                crrPoint.x.coerceIn(0, newScreenSize.width - contentSize.width),
+                crrPoint.x.coerceIn(0, coerceInMax(newScreenSize.width - contentSize.width)),
                 newScreenSize.height - contentSize.height
               )
             }
@@ -271,7 +275,7 @@ fun DraggableFloat(
             })
             (when (type) {
               DraggableType.MAIN -> mainConfig
-              DraggableType.EXTENDED -> expandedConfig
+              DraggableType.EXPANDED -> expandedConfig
             }).onDrag?.invoke(
               newChange!!,
               newDragAmount!!,
@@ -320,7 +324,7 @@ fun DraggableFloat(
             onDragStart = { offset ->
               (when (type) {
                 DraggableType.MAIN -> mainConfig
-                DraggableType.EXTENDED -> expandedConfig
+                DraggableType.EXPANDED -> expandedConfig
               }).onDragStart?.let { it(offset) }
             },
             onDrag = { change, dragAmount ->
@@ -328,11 +332,11 @@ fun DraggableFloat(
               crrPoint = Point(
                 (crrPoint.x + dragAmount.x.toInt()).coerceIn(
                   0,
-                  screenSize.width - contentSize.width
+                  coerceInMax(screenSize.width - contentSize.width)
                 ),
                 (crrPoint.y + dragAmount.y.toInt()).coerceIn(
                   0,
-                  screenSize.height - contentSize.height
+                  coerceInMax(screenSize.height - contentSize.height)
                 )
               )
 
@@ -422,9 +426,9 @@ fun DraggableFloat(
                         if (!wasWithinCloseArea) {
                           val newPoint = Point(
                             (closeCenterPoint!!.x - contentSize.width / 2)
-                              .coerceIn(0, screenSize.width - contentSize.width),
+                              .coerceIn(0, coerceInMax(screenSize.width - contentSize.width)),
                             (closeCenterPoint!!.y - contentSize.height / 2)
-                              .coerceIn(0, screenSize.height - contentSize.height)
+                              .coerceIn(0, coerceInMax(screenSize.height - contentSize.height))
                           )
 
                           if (enableAnimations == true) {
@@ -449,9 +453,12 @@ fun DraggableFloat(
 
                         val newSnapPoint = Point(
                           (centerPointF.x.toInt() - closeContainerView.width / 2)
-                            .coerceIn(0, screenSize.width - closeContainerView.width),
+                            .coerceIn(0, coerceInMax(screenSize.width - closeContainerView.width)),
                           (centerPointF.y.toInt() - closeContainerView.height / 2)
-                            .coerceIn(0, screenSize.height - closeContainerView.height),
+                            .coerceIn(
+                              0,
+                              coerceInMax(screenSize.height - closeContainerView.height)
+                            ),
                         )
 
                         if (enableAnimations == true) {
@@ -543,7 +550,7 @@ fun DraggableFloat(
 
               (when (type) {
                 DraggableType.MAIN -> mainConfig
-                DraggableType.EXTENDED -> expandedConfig
+                DraggableType.EXPANDED -> expandedConfig
               }).onDrag?.invoke(
                 change,
                 dragAmount,
@@ -560,7 +567,6 @@ fun DraggableFloat(
                 if (withinCloseArea) {
                   onClose?.let { it() }
                 }
-                // remove bottom back
               }
 
               if (mainConfig.isSnapToEdgeEnabled) {
@@ -600,7 +606,7 @@ fun DraggableFloat(
               }
               (when (type) {
                 DraggableType.MAIN -> mainConfig
-                DraggableType.EXTENDED -> expandedConfig
+                DraggableType.EXPANDED -> expandedConfig
               }).onDragEnd?.let { it() }
             }
           )
@@ -636,10 +642,15 @@ private fun followFloat(
     (followerInitialCenter.y - targetCrrCenter.y).toInt()
   )
 
-  val pointModifierY = ((if (!isFollowerVisible) centersDistance.y else abs(dragAmount.y.toInt())) * closeConfig.followRate).toInt()
+  val pointModifierY = ((if (!isFollowerVisible) abs(centersDistance.y) else abs(dragAmount.y.toInt())) * closeConfig.followRate).toInt()
   val followerPoint = if (!isFollowerVisible) followerInitialPoint else followerCrrPoint
 
+  // if target width == screen width -> newX = followerIniitalPoint.x (doesn't move at all, b/c target doesnt move either)
+  // if target width > screen width / 2 -> newX = crr formula, but future ones should just use drag amount, reason being
+  // centersdistance is stucked in a value that doesn't allow follower to go further, b/c of target massive width
+
   val newX = (followerInitialPoint.x - (centersDistance.x * closeConfig.followRate)).toInt()
+
   val newY = if (dragAmount.y > 0f) {
     followerPoint.y - pointModifierY
   } else if (dragAmount.y < 0f) {
@@ -649,8 +660,10 @@ private fun followFloat(
   }
 
   return Point(
-    newX.coerceIn(0, screenSize.width - targetContentSize.width),
-    newY.coerceIn(0, screenSize.height - targetContentSize.height)
+//    newX.coerceIn(0, coerceInMax(screenSize.width - targetContentSize.width)),
+    newX,
+    newY.coerceIn(0, coerceInMax((screenSize.height - followerContentSize.height - (followerContentSize.height * closeConfig.followRate)).toInt()))
+//    newY
   )
 }
 
@@ -671,8 +684,8 @@ private fun getCloseInitialPoint(
     val customStartY = (closeConfig.startPointDp?.y?.dp?.roundToPx() ?: closeConfig.startPointPx?.y
     ?: 0).toInt()
     Point(
-      customStartX.coerceIn(0, screenSize.width - contentSize.width),
-      customStartY.coerceIn(0, screenSize.height - contentSize.height)
+      customStartX.coerceIn(0, coerceInMax(screenSize.width - contentSize.width)),
+      customStartY.coerceIn(0, coerceInMax(screenSize.height - contentSize.height))
     )
   } else {
     val defaultStartX = (screenSize.width / 2) - (contentSize.width / 2)
@@ -684,4 +697,12 @@ private fun getCloseInitialPoint(
   }
 
   return closeInitialPoint
+}
+
+private fun coerceInMax(max: Int): Int {
+  return if (max < 0) {
+    0
+  } else {
+    max
+  }
 }

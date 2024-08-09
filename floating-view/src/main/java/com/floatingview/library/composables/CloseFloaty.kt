@@ -7,6 +7,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import android.view.WindowManager
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.ComposeView
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -21,9 +24,9 @@ fun CloseFloaty(
 ) {
   Box(
     modifier = modifier
-      .onSizeChanged { size ->
-        layoutParams.width = size.width
-        layoutParams.height = size.height
+      .wrapContentWidth(Alignment.Start, unbounded = true)
+      .wrapContentHeight(Alignment.Top, unbounded = true)
+      .onSizeChanged {
         windowManager.updateViewLayout(containerView, layoutParams)
       }
   ) {

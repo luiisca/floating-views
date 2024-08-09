@@ -1,10 +1,10 @@
 package com.floaty.app
 
 import FloatView
+
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
 import com.floatingview.library.CloseBehavior
 import com.floatingview.library.CloseFloatyConfig
 import com.floatingview.library.ExpandedFloatyConfig
@@ -37,11 +37,10 @@ class FloatyService : Service() {
 //        },
 //        startPointDp = PointF(240f, 600f),
 //        mountThresholdDp = 50f,
-//        closingThresholdDp = 30f,
         closeBehavior = CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT,
       ),
       expandedFloatyConfig = ExpandedFloatyConfig(
-        composable = {close -> ExtendedView(close)},
+        composable = {close -> ExpandedView(close) },
 //        tapOutsideToClose = false,
 //        dimAmount = 0.0f
       )

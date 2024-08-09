@@ -16,16 +16,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ExtendedView(close: () -> Unit) {
+fun ExpandedView(close: () -> Unit) {
   val color = remember { mutableStateOf(randomColor()) }
 
   Box(modifier = Modifier
     .size(200.dp)
+//    .height(111.dp)
+//    .requiredWidth(1000.dp)
     .background(color.value, shape = CircleShape)) {
     Button(onClick = { close() }) {
       Icon(
         imageVector = Icons.Default.Close,
-        contentDescription = "Hide expandedFloatyConfiged view",
+        contentDescription = "Hide expanded view",
         modifier = Modifier.size(28.dp)
       )
     }
@@ -38,4 +40,3 @@ fun randomColor() =
     green = kotlin.random.Random.nextFloat(),
     blue = kotlin.random.Random.nextFloat()
   )
-
