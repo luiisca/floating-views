@@ -2,6 +2,8 @@ package com.floaty.app
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -20,9 +22,9 @@ fun ExpandedView(close: () -> Unit) {
   val color = remember { mutableStateOf(randomColor()) }
 
   Box(modifier = Modifier
-    .size(200.dp)
-//    .height(111.dp)
-//    .requiredWidth(1000.dp)
+//    .size(200.dp)
+    .height(511.dp)
+    .requiredWidth(400.dp)
     .background(color.value, shape = CircleShape)) {
     Button(onClick = { close() }) {
       Icon(

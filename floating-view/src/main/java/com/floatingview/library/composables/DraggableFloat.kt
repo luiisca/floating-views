@@ -645,25 +645,23 @@ private fun followFloat(
   val pointModifierY = ((if (!isFollowerVisible) abs(centersDistance.y) else abs(dragAmount.y.toInt())) * closeConfig.followRate).toInt()
   val followerPoint = if (!isFollowerVisible) followerInitialPoint else followerCrrPoint
 
-  // if target width == screen width -> newX = followerIniitalPoint.x (doesn't move at all, b/c target doesnt move either)
-  // if target width > screen width / 2 -> newX = crr formula, but future ones should just use drag amount, reason being
-  // centersdistance is stucked in a value that doesn't allow follower to go further, b/c of target massive width
-
   val newX = (followerInitialPoint.x - (centersDistance.x * closeConfig.followRate)).toInt()
 
   val newY = if (dragAmount.y > 0f) {
     followerPoint.y - pointModifierY
   } else if (dragAmount.y < 0f) {
-    followerPoint.y + pointModifierY
+    if (!isFollowerVisible) {
+      followerPoint.y - pointModifierY
+    } else {
+      followerPoint.y + pointModifierY
+    }
   } else {
     followerPoint.y
   }
 
   return Point(
-//    newX.coerceIn(0, coerceInMax(screenSize.width - targetContentSize.width)),
     newX,
     newY.coerceIn(0, coerceInMax((screenSize.height - followerContentSize.height - (followerContentSize.height * closeConfig.followRate)).toInt()))
-//    newY
   )
 }
 
