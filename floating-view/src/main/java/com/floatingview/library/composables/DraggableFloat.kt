@@ -2,7 +2,6 @@ package com.floatingview.library.composables
 
 import android.graphics.Point
 import android.graphics.PointF
-import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -135,7 +134,6 @@ fun DraggableFloat(
           onTap = { offset ->
             when (type) {
               DraggableType.MAIN -> {
-                Log.d("DraggableFloat", "✅MAIN tapped!")
                 if (expandedConfig.enabled) {
                   openExpandedView?.let { it() }
                 }
@@ -143,7 +141,6 @@ fun DraggableFloat(
               }
 
               DraggableType.EXPANDED -> {
-                Log.d("DraggableFloat", "✅EXPANDED tapped!")
                 expandedConfig.onTap?.let { it(offset) }
               }
             }
