@@ -36,17 +36,24 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -69,55 +76,19 @@ enum class CupcakeScreen(@StringRes val title: Int) {
     Summary(title = R.string.order_summary)
 }
 
-/** Composable that displays the topBar and displays back button if back navigation is possible. */
-@Composable
-fun CupcakeAppBar(
-        crrScreen: CupcakeScreen,
-        canNavigateBack: Boolean,
-        navigateUp: () -> Unit,
-        modifier: Modifier = Modifier
-) {
-    TopAppBar(
-            title = { Text(stringResource(id = crrScreen.title)) },
-            colors =
-                    TopAppBarDefaults.mediumTopAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                    ),
-            modifier = modifier,
-            navigationIcon = {
-                if (canNavigateBack) {
-                    IconButton(onClick = navigateUp) {
-                        Icon(
-                                imageVector = Icons.Filled.ArrowBack,
-                                contentDescription = stringResource(R.string.back_button)
-                        )
-                    }
-                }
-            }
-    )
-}
-
 @Composable
 fun FloatyApp(
         viewModel: OrderViewModel = viewModel(),
         navController: NavHostController = rememberNavController()
 ) {
-  val backStackEntry by navController.currentBackStackEntryAsState()
   val density = LocalDensity.current
   val configuration = LocalConfiguration.current
 
+  var txt by remember {
+    mutableStateOf("")
+  }
+
   Scaffold(
-//    topBar = {
-//      CupcakeAppBar(
-//        crrScreen =
-//                CupcakeScreen.valueOf(
-//                        backStackEntry?.destination?.route
-//                                ?: CupcakeScreen.Start.name
-//                ),
-//        canNavigateBack = navController.previousBackStackEntry != null,
-//        navigateUp = { navController.navigateUp() }
-//      )
-//    },
     floatingActionButton = {
       val context = LocalContext.current
 
@@ -137,94 +108,47 @@ fun FloatyApp(
     }
   ) { innerPadding ->
     println(innerPadding)
-      //        NavHost(
-      //            navController,
-      //            modifier = Modifier.padding(innerPadding),
-      //            graph = navGraph
-      //        )
+
+    Column {
+      TextField(value = txt, onValueChange = {txt = it})
+      Test()
+    }
   }
 }
 
-private fun cancelOrderAndNavigateToStart(
-        viewModel: OrderViewModel,
-        navController: NavHostController
-) {
-    navController.popBackStack(CupcakeScreen.Start.name, inclusive = false)
-    viewModel.resetOrder()
-}
-
-private fun shareOrder(context: Context, order: String, summary: String) {
-    val intent =
-            Intent(Intent.ACTION_SEND).apply {
-                this.type = "text/plain"
-                putExtra(Intent.EXTRA_SUBJECT, order)
-                putExtra(Intent.EXTRA_TEXT, summary)
-            }
-    context.startActivity(
-            Intent.createChooser(intent, context.getString(R.string.new_cupcake_order))
+@Composable
+fun Test() {
+  var expand by remember { mutableStateOf(false) }
+  var text by remember { mutableStateOf("") }
+  ExposedDropdownMenuBox(
+    expanded = expand,
+    onExpandedChange = { expand = !expand },
+  ) {
+    OutlinedTextField(
+      value = text,
+      label = { Text("Options") },
+      onValueChange = {
+        text = it
+      },
+      trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expand) },
+      modifier = Modifier.menuAnchor(),
     )
-}
 
-//val navGraph = remember {
-//  navController.createGraph(CupcakeScreen.Start.name) {
-//    composable(CupcakeScreen.Start.name) {
-//      StartOrderScreen(
-//        quantityOptions = DataSource.quantityOptions,
-//        onNextButtonClicked = { numberCupcakes: Int ->
-//          viewModel.setQuantity(numberCupcakes)
-//          navController.navigate(CupcakeScreen.Flavor.name)
-//        },
-//        onCancelButtonClicked = {
-//          navController.popBackStack(CupcakeScreen.Start.name, inclusive = true)
-//        },
-//        navController = navController,
-//        modifier =
-//        Modifier
-//          .fillMaxSize()
-//          .padding(dimensionResource(R.dimen.padding_medium))
-//      )
-//    }
-//    composable(CupcakeScreen.Flavor.name) {
-//      val context = LocalContext.current
-//
-//      SelectOptionScreen(
-//        subtotal = uiState.price,
-//        options = DataSource.flavors.map { id -> context.resources.getString(id) },
-//        onCancelButtonClicked = {
-//          cancelOrderAndNavigateToStart(viewModel, navController)
-//        },
-//        onNextButtonClicked = { navController.navigate(CupcakeScreen.Pickup.name) },
-//        onSelectionChanged = { viewModel.setFlavor(it) },
-//        modifier = Modifier.fillMaxSize()
-//      )
-//    }
-//    composable(CupcakeScreen.Pickup.name) {
-//      SelectOptionScreen(
-//        subtotal = uiState.price,
-//        options = uiState.pickupOptions,
-//        onCancelButtonClicked = {
-//          cancelOrderAndNavigateToStart(viewModel, navController)
-//        },
-//        onNextButtonClicked = {
-//          navController.navigate(CupcakeScreen.Summary.name)
-//        },
-//        onSelectionChanged = { viewModel.setDate(it) },
-//        modifier = Modifier.fillMaxSize()
-//      )
-//    }
-//    composable(CupcakeScreen.Summary.name) {
-//      val context = LocalContext.current
-//
-//      OrderSummaryScreen(
-//        orderUiState = uiState,
-//        onCancelButtonClicked = {
-//          cancelOrderAndNavigateToStart(viewModel, navController)
-//        },
-//        onSendButtonClicked = { order: String, summary: String ->
-//          shareOrder(context, order, summary)
-//        },
-//        modifier = Modifier.fillMaxSize()
-//      )
-//    }
-//  }
-//}
+    ExposedDropdownMenu(
+      expanded = expand,
+      onDismissRequest = { expand = false },
+    ) {
+      listOf("foo", "bar", "baz")
+        .filter { it.contains(text) }
+        .forEach {
+          DropdownMenuItem(
+            text = { Text(it) },
+            onClick = {
+              text = it
+              expand = false
+            }
+          )
+        }
+    }
+  }
+}

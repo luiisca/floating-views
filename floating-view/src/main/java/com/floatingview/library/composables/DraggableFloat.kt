@@ -110,6 +110,7 @@ fun DraggableFloat(
           onTap = { offset ->
             when (type) {
               DraggableType.MAIN -> {
+                Log.d("DraggableFloat", "✅MAIN tapped!")
                 if (expandedConfig.enabled) {
                   openExpandedView?.let { it() }
                 }
@@ -117,6 +118,7 @@ fun DraggableFloat(
               }
 
               DraggableType.EXPANDED -> {
+                Log.d("DraggableFloat", "✅EXPANDED tapped!")
                 expandedConfig.onTap?.let { it(offset) }
               }
             }

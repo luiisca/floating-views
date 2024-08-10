@@ -416,8 +416,7 @@ class CreateFloatViews(
         y = mainStartPoint.y
     }
     var expandedLayoutParams = baseLayoutParams().apply {
-        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
+        flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_DIM_BEHIND
         dimAmount = expandedFloatyConfig.dimAmount
         x = expandedStartPoint.x

@@ -31,7 +31,13 @@ fun FullscreenOverlayFloat(onTap: ((Offset) -> Unit)? = null) {
       .fillMaxSize()
       .pointerInput(Unit) {
         detectTapGestures(
-          onTap = onTap
+          onTap = {
+            Log.d("FullscreenOverlayFloat", "✅FULLSCREEN tapped!")
+
+            if (onTap != null) {
+              onTap(it)
+            }
+          }
         )
       }
   )
