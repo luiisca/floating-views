@@ -1,10 +1,10 @@
 package com.floaty.app
 
 import FloatView
+
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
 import com.floatingview.library.CloseBehavior
 import com.floatingview.library.CloseFloatyConfig
 import com.floatingview.library.ExpandedFloatyConfig
@@ -37,17 +37,17 @@ class FloatyService : Service() {
 //        },
 //        startPointDp = PointF(240f, 600f),
 //        mountThresholdDp = 50f,
-//        closingThresholdDp = 30f,
         closeBehavior = CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT,
       ),
       expandedFloatyConfig = ExpandedFloatyConfig(
-        composable = {hide -> ExtendedView(hide)},
+        composable = {close -> ExpandedView(close) },
+//        tapOutsideToClose = false,
+//        dimAmount = 0.0f
       )
     )
 
     // can be omitted for service.startForeground with custom notification or just pass custom properties
     floatiesBuilder.startForegroundWithDefaultNotification()
-    floatiesBuilder.setup(this)
   }
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
