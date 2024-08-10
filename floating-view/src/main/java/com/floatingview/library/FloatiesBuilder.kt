@@ -452,7 +452,7 @@ class CreateFloatViews(
                     closeConfig = closeFloatyConfig,
                     expandedConfig = expandedFloatyConfig,
                     openExpandedView = { openExpanded() },
-                    onClose = { tryCloseDraggable(openMainAfter = false) }
+                    onClose = { openMainAfter -> tryCloseDraggable(openMainAfter ?: false) }
                 ) {
                     AdaptiveSizeWrapper(updateLayoutParams = { contentSize, screenSize ->
                         mainLayoutParams = if (contentSize.width >= screenSize.width) {
@@ -502,7 +502,7 @@ class CreateFloatViews(
                     mainConfig = mainFloatyConfig,
                     closeConfig = closeFloatyConfig,
                     expandedConfig = expandedFloatyConfig,
-                    onClose = { tryCloseDraggable(openMainAfter = false) }
+                    onClose = { openMainAfter -> tryCloseDraggable(openMainAfter ?: false) }
                 ) {
                     AdaptiveSizeWrapper(updateLayoutParams = { contentSize, screenSize ->
                         expandedLayoutParams = if (contentSize.width >= screenSize.width) {

@@ -11,6 +11,7 @@ import androidx.compose.animation.core.animateInt
 import androidx.compose.animation.core.calculateTargetValue
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.splineBasedDecay
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -26,7 +27,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
@@ -75,9 +81,11 @@ fun DraggableFloat(
   expandedConfig: ExpandedFloatyConfig,
   closeConfig: CloseFloatyConfig,
   openExpandedView: (() -> Unit)? = null,
-  onClose: (() -> Unit)? = null,
+  onClose: ((openMainAfter: Boolean?) -> Unit)? = null,
   content: @Composable BoxScope.() -> Unit,
 ) {
+  val focusRequester = remember {FocusRequester()}
+
   val context = LocalContext.current
   val density = LocalDensity.current
   val configuration = LocalConfiguration.current
@@ -93,6 +101,12 @@ fun DraggableFloat(
 
   var contentSize by remember { mutableStateOf(IntSize.Zero) }
 
+  LaunchedEffect(key1 = type) {
+    if (type == DraggableType.EXPANDED) {
+      focusRequester.requestFocus()
+    }
+  }
+
   Box(
     propagateMinConstraints = true,
     modifier = modifier
@@ -105,6 +119,17 @@ fun DraggableFloat(
       .wrapContentWidth(Alignment.Start, unbounded = true)
       .wrapContentHeight(Alignment.Top, unbounded = true)
       .systemGestureExclusion()
+      .onKeyEvent { event ->
+        if (event.key == Key.Back) {
+          onClose?.let { it(true) }
+
+          true
+        } else {
+          false
+        }
+      }
+      .focusRequester(focusRequester)
+      .focusable()
       .pointerInput(Unit) {
         detectTapGestures(
           onTap = { offset ->
@@ -567,7 +592,7 @@ fun DraggableFloat(
                 isCloseVisible = false
 
                 if (withinCloseArea) {
-                  onClose?.let { it() }
+                  onClose?.let { it(false) }
                 }
               }
 
