@@ -14,21 +14,21 @@ import androidx.compose.ui.unit.dp
 import io.github.luiisca.floating.views.helpers.PermissionHelper
 
 @Composable
-fun FloatyApp() {
+fun App() {
   Scaffold(
     floatingActionButton = {
       val context = LocalContext.current
 
       LargeFloatingActionButton(
         onClick = {
-          PermissionHelper.startFloatyServiceIfPermitted(context, Service::class.java)
+          PermissionHelper.startFloatServiceIfPermitted(context, Service::class.java)
         },
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
       ) {
         Icon(
           imageVector = Icons.Default.Add,
-          contentDescription = "Create new floaty",
+          contentDescription = "Create new float",
           modifier = Modifier.size(28.dp)
         )
       }

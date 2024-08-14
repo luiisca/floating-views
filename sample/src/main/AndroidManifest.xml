@@ -18,7 +18,8 @@
             android:enabled="true"
             android:foregroundServiceType="specialUse">
             <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" />
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="describe your special use case for app store publishing review" />
         </service>
 
         <activity

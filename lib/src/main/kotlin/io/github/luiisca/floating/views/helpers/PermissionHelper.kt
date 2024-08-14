@@ -19,7 +19,7 @@ object PermissionHelper {
     return Settings.canDrawOverlays(context)
   }
 
-  fun startFloatyServiceIfPermitted(context: Context, serviceClass: Class<*>) {
+  fun startFloatServiceIfPermitted(context: Context, serviceClass: Class<*>) {
     if (canDrawOverlays(context)) {
       ContextCompat.startForegroundService(context, Intent(context, serviceClass))
     } else {

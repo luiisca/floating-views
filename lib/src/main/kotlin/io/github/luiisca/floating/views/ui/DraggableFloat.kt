@@ -45,10 +45,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import io.github.luiisca.floating.views.CloseBehavior
-import io.github.luiisca.floating.views.CloseFloatyConfig
+import io.github.luiisca.floating.views.CloseFloatConfig
 import io.github.luiisca.floating.views.DraggableType
-import io.github.luiisca.floating.views.ExpandedFloatyConfig
-import io.github.luiisca.floating.views.MainFloatyConfig
+import io.github.luiisca.floating.views.ExpandedFloatConfig
+import io.github.luiisca.floating.views.MainFloatConfig
 import io.github.luiisca.floating.views.helpers.getScreenSizeWithoutInsets
 import kotlin.math.abs
 
@@ -76,9 +76,9 @@ fun DraggableFloat(
   layoutParams: WindowManager.LayoutParams,
   modifier: Modifier = Modifier,
   enableAnimations: Boolean? = true,
-  mainConfig: MainFloatyConfig,
-  expandedConfig: ExpandedFloatyConfig,
-  closeConfig: CloseFloatyConfig,
+  mainConfig: MainFloatConfig,
+  expandedConfig: ExpandedFloatConfig,
+  closeConfig: CloseFloatConfig,
   openExpandedView: (() -> Unit)? = null,
   onClose: ((openMainAfter: Boolean?) -> Unit)? = null,
   content: @Composable BoxScope.() -> Unit,
@@ -650,7 +650,7 @@ private fun followFloat(
   targetContentSize: IntSize,
   dragAmount: Offset,
   screenSize: IntSize,
-  closeConfig: CloseFloatyConfig
+  closeConfig: CloseFloatConfig
 ): Point {
   val followerInitialCenter = PointF(
     followerInitialPoint.x + followerContentSize.width / 2f,
@@ -691,7 +691,7 @@ private fun followFloat(
 
 private fun getCloseInitialPoint(
   density: Density,
-  closeConfig: CloseFloatyConfig,
+  closeConfig: CloseFloatConfig,
   contentSize: IntSize,
   screenSize: IntSize,
 ): Point {
