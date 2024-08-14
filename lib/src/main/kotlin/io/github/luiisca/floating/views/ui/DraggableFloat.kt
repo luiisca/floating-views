@@ -366,7 +366,7 @@ fun DraggableFloat(
 
               // MOUNT CLOSE LOGIC
               if (closeConfig.enabled) {
-                if (!isCloseMounted && (abs(dragAmount.x) > mountThreshold || abs(dragAmount.y) > mountThreshold)) {
+                if (!isCloseMounted && !isCloseVisible && (abs(dragAmount.x) > mountThreshold || abs(dragAmount.y) > mountThreshold)) {
                   closeContainerView.visibility = View.INVISIBLE
                   windowManager.addView(closeContainerView, closeLayoutParams)
                   isCloseMounted = true
@@ -583,13 +583,15 @@ fun DraggableFloat(
               )
             },
             onDragEnd = {
-              if (closeConfig.enabled && isCloseMounted && isCloseVisible) {
+              if (closeConfig.enabled && isCloseMounted) {
                 windowManager.removeView(closeContainerView)
                 isCloseMounted = false
-                isCloseVisible = false
 
-                if (withinCloseArea) {
-                  onClose?.let { it(false) }
+                if (isCloseVisible) {
+                  if (withinCloseArea) {
+                    onClose?.let { it(false) }
+                  }
+                  isCloseVisible = false
                 }
               }
 
