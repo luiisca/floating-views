@@ -19,7 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Floaty"
-include(":app")
-include(":floating-view")
-
+rootProject.name = "floating-views"
+include(":sample", ":lib")
