@@ -2,6 +2,7 @@ package io.github.luiisca.floating.views.ui
 
 import android.graphics.Point
 import android.graphics.PointF
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -366,6 +367,7 @@ fun DraggableFloat(
 
               // MOUNT CLOSE LOGIC
               if (closeConfig.enabled) {
+                Log.d("DraggableFloat", "isCloseMounted: $isCloseMounted, isCloseVisible: $isCloseVisible")
                 if (!isCloseMounted && !isCloseVisible && (abs(dragAmount.x) > mountThreshold || abs(dragAmount.y) > mountThreshold)) {
                   closeContainerView.visibility = View.INVISIBLE
                   windowManager.addView(closeContainerView, closeLayoutParams)
@@ -376,6 +378,7 @@ fun DraggableFloat(
                   && (closeContainerView.width > 0 || closeContainerView.height > 0)
                 ) {
 
+                  // TODO: close view is sometimes not visible
                   if (closeContentSize == null) {
                     closeContentSize = IntSize(closeContainerView.width, closeContainerView.height)
                   }
@@ -583,6 +586,7 @@ fun DraggableFloat(
               )
             },
             onDragEnd = {
+              Log.d("DraggableFloat", "isCloseMounted: $isCloseMounted")
               if (closeConfig.enabled && isCloseMounted) {
                 windowManager.removeView(closeContainerView)
                 isCloseMounted = false

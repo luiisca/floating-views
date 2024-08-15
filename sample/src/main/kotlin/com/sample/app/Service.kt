@@ -10,6 +10,7 @@ import io.github.luiisca.floating.views.CloseFloatConfig
 import io.github.luiisca.floating.views.ExpandedFloatConfig
 import io.github.luiisca.floating.views.FloatingViewsBuilder
 import io.github.luiisca.floating.views.MainFloatConfig
+import io.github.luiisca.floating.views.helpers.FloatServiceStateManager
 
 class Service : Service() {
   private lateinit var floatingViewsBuilder: FloatingViewsBuilder
@@ -20,8 +21,11 @@ class Service : Service() {
   override fun onCreate() {
     super.onCreate()
 
+    FloatServiceStateManager.setServiceRunning(true)
+
     floatingViewsBuilder = FloatingViewsBuilder(
       this,
+      stopService = { stopSelf() },
       mainFloatConfig = MainFloatConfig(
         composable = { FloatView() },
       ),
