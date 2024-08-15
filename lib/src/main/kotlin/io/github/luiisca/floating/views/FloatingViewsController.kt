@@ -6,7 +6,6 @@ import android.graphics.PixelFormat
 import android.graphics.Point
 import android.graphics.PointF
 import android.os.Build
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -291,8 +290,11 @@ data class CloseFloatConfig(
     var followRate: Float = 0.1f,
 )
 
-class FloatingViewsBuilder(
+class FloatingViewsController(
     private val context: Context,
+    /**
+     * Called after the last main float view is "dropped" within the close area
+     */
     private val stopService: () -> Unit,
     private val enableAnimations: Boolean = true,
     private val mainFloatConfig: MainFloatConfig = MainFloatConfig(),
@@ -318,9 +320,10 @@ class FloatingViewsBuilder(
     }
 
     /**
+     * Starts a foreground service with a default customizable notification.
      * Can be omitted for `service.startForeground` with custom notification or just pass custom parameters
      */
-    fun startForegroundWithDefaultNotification(icon: Int = R.drawable.round_bubble_chart_24, title: String = "Floating views running") {
+    fun startForegroundService(icon: Int = R.drawable.round_bubble_chart_24, title: String = "Floating views running") {
         val service = context as Service
         val notificationHelper = NotificationHelper(service)
         notificationHelper.createNotificationChannel()
@@ -328,7 +331,11 @@ class FloatingViewsBuilder(
         service.startForeground(notificationHelper.notificationId, notificationHelper.createDefaultNotification(icon, title))
     }
 
-    fun addFloat() {
+    /**
+     * Sets up a new floating view, as well as close, expanded, and overlay views based on the configs
+     * passed to the `FloatingViewsController` and manages the lifecycle and interactions between them
+     */
+    fun initializeNewFloatSystem() {
         floatsCount += 1
 
         createFloatViews = CreateFloatViews(
@@ -349,7 +356,10 @@ class FloatingViewsBuilder(
         )
     }
 
-    fun removeAllViews() {
+    /**
+     * Removes all views added while the Service was alive
+     */
+    fun shutdownAllFloatSystems() {
         addedViews.forEach { view ->
             try {
                 windowManager.removeView(view)
@@ -399,7 +409,7 @@ class FloatingViewsBuilder(
         addToComposeLifecycle(closeFloat)
     }
 
-    fun addToComposeLifecycle(composable: ComposeView) {
+    private fun addToComposeLifecycle(composable: ComposeView) {
         composeOwner.attachToDecorView(composable)
         if (!isComposeOwnerInit) {
             composeOwner.onCreate()

@@ -52,6 +52,7 @@ android {
 }
 
 dependencies {
+    // TODO: use published version
     implementation(project(":lib"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
