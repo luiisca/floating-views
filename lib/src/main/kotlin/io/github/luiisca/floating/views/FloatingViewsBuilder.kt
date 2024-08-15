@@ -6,6 +6,7 @@ import android.graphics.PixelFormat
 import android.graphics.Point
 import android.graphics.PointF
 import android.os.Build
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -292,6 +293,7 @@ data class CloseFloatConfig(
 
 class FloatingViewsBuilder(
     private val context: Context,
+    private val stopService: () -> Unit,
     private val enableAnimations: Boolean = true,
     private val mainFloatConfig: MainFloatConfig = MainFloatConfig(),
     private val closeFloatConfig: CloseFloatConfig = CloseFloatConfig(),
@@ -300,11 +302,14 @@ class FloatingViewsBuilder(
     private val composeOwner = FloatLifecycleOwner()
     private var isComposeOwnerInit: Boolean = false
     private val windowManager = context.getSystemService(Service.WINDOW_SERVICE) as WindowManager
-    var closeView: ComposeView? = null
-    var closeLayoutParams = baseLayoutParams().apply {
+    private var closeView: ComposeView? = null
+    private var closeLayoutParams = baseLayoutParams().apply {
         flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
     }
+    private var createFloatViews: CreateFloatViews? = null
+    private var floatsCount: Int = 0
+    private val addedViews = mutableListOf<View>()
 
     init {
         if (closeFloatConfig.enabled) {
@@ -322,8 +327,11 @@ class FloatingViewsBuilder(
 
         service.startForeground(notificationHelper.notificationId, notificationHelper.createDefaultNotification(icon, title))
     }
+
     fun addFloat() {
-        CreateFloatViews(
+        floatsCount += 1
+
+        createFloatViews = CreateFloatViews(
             context,
             enableAnimations,
             mainFloatConfig,
@@ -333,10 +341,23 @@ class FloatingViewsBuilder(
                 addToComposeLifecycle(composable)
             },
             closeView,
-            closeLayoutParams
+            closeLayoutParams,
+            getFloatsCount = {floatsCount},
+            setFloatsCount = {floatsCount = it},
+            stopService,
+            addViewToTrackingList = {view -> addedViews.add(view)},
         )
     }
 
+    fun removeAllViews() {
+        addedViews.forEach { view ->
+            try {
+                windowManager.removeView(view)
+            } catch (_: IllegalArgumentException) {
+            }
+        }
+        addedViews.clear()
+    }
 
     private fun createCloseView() {
         val closeFloat = ComposeView(context).apply {
@@ -399,48 +420,52 @@ class CreateFloatViews(
     private val addToComposeLifecycle: (composable: ComposeView) -> Unit,
     private val closeView: ComposeView?,
     private val closeLayoutParams: WindowManager.LayoutParams,
+    private val getFloatsCount: () -> Int,
+    private val setFloatsCount: (newCount: Int) -> Unit,
+    private val stopService: () -> Unit,
+    private val addViewToTrackingList: (view: View) -> Unit,
 ) {
     private val windowManager = context.getSystemService(Service.WINDOW_SERVICE) as WindowManager
-    var mainView: ComposeView? = null
-    var expandedView: ComposeView? = null
-    var overlayView: ComposeView? = null
-    val mainStartPoint = Point(
+
+    private var mainView: ComposeView? = null
+    private var expandedView: ComposeView? = null
+    private var overlayView: ComposeView? = null
+    private val mainStartPoint = Point(
             (mainFloatConfig.startPointDp?.x?.toPx() ?: mainFloatConfig.startPointPx?.x ?: 0f).toInt(),
             (mainFloatConfig.startPointDp?.y?.toPx() ?: mainFloatConfig.startPointPx?.y ?: 0f).toInt()
         )
-    val expandedStartPoint = Point(
+    private val expandedStartPoint = Point(
         (expandedFloatConfig.startPointDp?.x?.toPx() ?: expandedFloatConfig.startPointPx?.x ?: 0f).toInt(),
         (expandedFloatConfig.startPointDp?.y?.toPx() ?: expandedFloatConfig.startPointPx?.y ?: 0f).toInt()
     )
-    var mainLayoutParams = baseLayoutParams().apply {
+    private var mainLayoutParams = baseLayoutParams().apply {
         flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
         x = mainStartPoint.x
         y = mainStartPoint.y
     }
-    var expandedLayoutParams = baseLayoutParams().apply {
+    private var expandedLayoutParams = baseLayoutParams().apply {
         flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_DIM_BEHIND
         dimAmount = expandedFloatConfig.dimAmount
         x = expandedStartPoint.x
         y = expandedStartPoint.y
     }
-    val overlayLayoutParams = baseLayoutParams().apply {
+    private val overlayLayoutParams = baseLayoutParams().apply {
         width = WindowManager.LayoutParams.MATCH_PARENT
         height = WindowManager.LayoutParams.MATCH_PARENT
     }
 
-    var isOverlayVisible = false
-    var isExpandedVisible = false
-    var isMainVisible = false
-
+    private var isOverlayVisible = false
+    private var isExpandedVisible = false
+    private var isMainVisible = false
 
     init {
         createMainView()
     }
 
     private fun createMainView() {
-        val mainFloat = ComposeView(context).apply {
+        val _mainView = ComposeView(context).apply {
             mainView = this
             this.setContent {
                 DraggableFloat(
@@ -455,7 +480,15 @@ class CreateFloatViews(
                     closeConfig = closeFloatConfig,
                     expandedConfig = expandedFloatConfig,
                     openExpandedView = { openExpanded() },
-                    onClose = { openMainAfter -> tryCloseDraggable(openMainAfter ?: false) }
+                    onClose = { openMainAfter ->
+                        if (getFloatsCount() <= 1) {
+                            stopService()
+                        }
+                        if (openMainAfter == false) {
+                            setFloatsCount(getFloatsCount() - 1)
+                        }
+                        tryCloseDraggable(openMainAfter ?: false)
+                    }
                 ) {
                     AdaptiveSizeWrapper(updateLayoutParams = { contentSize, screenSize ->
                         mainLayoutParams = if (contentSize.width >= screenSize.width) {
@@ -485,13 +518,14 @@ class CreateFloatViews(
             }
         }
 
-        addToComposeLifecycle(mainFloat)
-        windowManager.addView(mainFloat, mainLayoutParams)
+        addToComposeLifecycle(_mainView)
+        windowManager.addView(_mainView, mainLayoutParams)
+        addViewToTrackingList(_mainView)
         isMainVisible = true
     }
 
     private fun createExpandedView() {
-        val expandedFloat = ComposeView(context).apply {
+        val _expandedView = ComposeView(context).apply {
             expandedView = this
             this.setContent {
                 DraggableFloat(
@@ -505,7 +539,15 @@ class CreateFloatViews(
                     mainConfig = mainFloatConfig,
                     closeConfig = closeFloatConfig,
                     expandedConfig = expandedFloatConfig,
-                    onClose = { openMainAfter -> tryCloseDraggable(openMainAfter ?: false) }
+                    onClose = { openMainAfter ->
+                        if (getFloatsCount() <= 1) {
+                            stopService()
+                        }
+                        if (openMainAfter == false) {
+                            setFloatsCount(getFloatsCount() - 1)
+                        }
+                        tryCloseDraggable(openMainAfter ?: false)
+                    }
                 ) {
                     AdaptiveSizeWrapper(updateLayoutParams = { contentSize, screenSize ->
                         expandedLayoutParams = if (contentSize.width >= screenSize.width) {
@@ -537,14 +579,15 @@ class CreateFloatViews(
             }
         }
 
-        addToComposeLifecycle(expandedFloat)
-        windowManager.addView(expandedView, expandedLayoutParams)
+        addToComposeLifecycle(_expandedView)
+        windowManager.addView(_expandedView, expandedLayoutParams)
+        addViewToTrackingList(_expandedView)
         isExpandedVisible = true
     }
 
     private fun tryCreateOverlayView() {
         if (expandedFloatConfig.tapOutsideToClose) {
-            val overlayFloat = ComposeView(context).apply {
+            val _overlayView = ComposeView(context).apply {
                 overlayView = this
                 this.setContent {
                     FullscreenOverlayFloat(
@@ -553,8 +596,9 @@ class CreateFloatViews(
                 }
             }
 
-            addToComposeLifecycle(overlayFloat)
-            windowManager.addView(overlayView, overlayLayoutParams)
+            addToComposeLifecycle(_overlayView)
+            windowManager.addView(_overlayView, overlayLayoutParams)
+            addViewToTrackingList(_overlayView)
             isOverlayVisible = true
         }
     }
@@ -584,9 +628,6 @@ class CreateFloatViews(
             isExpandedVisible = false
         }
     }
-//    private fun tryRemoveClose() {
-//        if (closeView)
-//    }
     private fun tryRemoveOverlay() {
         if (overlayView != null && isOverlayVisible) {
             windowManager.removeView(overlayView)
