@@ -20,7 +20,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
-class FloatyLifecycleOwner :
+class FloatLifecycleOwner :
     LifecycleOwner, ViewModelStoreOwner, SavedStateRegistryOwner {
 
     private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)

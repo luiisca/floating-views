@@ -6,10 +6,11 @@ import android.os.IBinder
 import com.sample.app.ui.ExpandedView
 import com.sample.app.ui.FloatView
 import io.github.luiisca.floating.views.CloseBehavior
-import io.github.luiisca.floating.views.CloseFloatyConfig
-import io.github.luiisca.floating.views.ExpandedFloatyConfig
+import io.github.luiisca.floating.views.CloseFloatConfig
+import io.github.luiisca.floating.views.ExpandedFloatConfig
 import io.github.luiisca.floating.views.FloatingViewsBuilder
-import io.github.luiisca.floating.views.MainFloatyConfig
+import io.github.luiisca.floating.views.MainFloatConfig
+import io.github.luiisca.floating.views.helpers.FloatServiceStateManager
 
 class Service : Service() {
   private lateinit var floatingViewsBuilder: FloatingViewsBuilder
@@ -20,15 +21,18 @@ class Service : Service() {
   override fun onCreate() {
     super.onCreate()
 
+    FloatServiceStateManager.setServiceRunning(true)
+
     floatingViewsBuilder = FloatingViewsBuilder(
       this,
-      mainFloatyConfig = MainFloatyConfig(
+      stopService = { stopSelf() },
+      mainFloatConfig = MainFloatConfig(
         composable = { FloatView() },
       ),
-      closeFloatyConfig = CloseFloatyConfig(
+      closeFloatConfig = CloseFloatConfig(
         closeBehavior = CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT,
       ),
-      expandedFloatyConfig = ExpandedFloatyConfig(
+      expandedFloatConfig = ExpandedFloatConfig(
         composable = {close -> ExpandedView(close) },
       )
     )
@@ -38,8 +42,15 @@ class Service : Service() {
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     super.onStartCommand(intent, flags, startId)
-    floatingViewsBuilder.addFloaty()
+    floatingViewsBuilder.addFloat()
 
     return START_STICKY
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    floatingViewsBuilder.removeAllViews()
+    FloatServiceStateManager.setServiceRunning(false)
   }
 }

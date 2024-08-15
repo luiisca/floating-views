@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
 
         this.setContent {
             Theme {
-                FloatyApp()
+                App()
             }
         }
     }

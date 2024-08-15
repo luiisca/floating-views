@@ -15,7 +15,7 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 @Composable
-fun CloseFloaty(
+fun CloseFloat(
   windowManager: WindowManager,
   containerView: ComposeView,
   layoutParams: WindowManager.LayoutParams,
@@ -34,8 +34,8 @@ fun CloseFloaty(
   }
 }
 
-fun isWithinCloseArea(floatyCenterPointF: PointF, closeCenterPointF: PointF, closingThreshold: Float): Boolean {
-  return distanceBetweenTwoPoints(floatyCenterPointF, closeCenterPointF) <= closingThreshold
+fun isWithinCloseArea(floatCenterPointF: PointF, closeCenterPointF: PointF, closingThreshold: Float): Boolean {
+  return distanceBetweenTwoPoints(floatCenterPointF, closeCenterPointF) <= closingThreshold
 }
 
 fun distanceBetweenTwoPoints(pointA: PointF, pointB: PointF): Float {

@@ -2,6 +2,7 @@ package io.github.luiisca.floating.views.ui
 
 import android.graphics.Point
 import android.graphics.PointF
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -45,10 +46,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import io.github.luiisca.floating.views.CloseBehavior
-import io.github.luiisca.floating.views.CloseFloatyConfig
+import io.github.luiisca.floating.views.CloseFloatConfig
 import io.github.luiisca.floating.views.DraggableType
-import io.github.luiisca.floating.views.ExpandedFloatyConfig
-import io.github.luiisca.floating.views.MainFloatyConfig
+import io.github.luiisca.floating.views.ExpandedFloatConfig
+import io.github.luiisca.floating.views.MainFloatConfig
 import io.github.luiisca.floating.views.helpers.getScreenSizeWithoutInsets
 import kotlin.math.abs
 
@@ -76,9 +77,9 @@ fun DraggableFloat(
   layoutParams: WindowManager.LayoutParams,
   modifier: Modifier = Modifier,
   enableAnimations: Boolean? = true,
-  mainConfig: MainFloatyConfig,
-  expandedConfig: ExpandedFloatyConfig,
-  closeConfig: CloseFloatyConfig,
+  mainConfig: MainFloatConfig,
+  expandedConfig: ExpandedFloatConfig,
+  closeConfig: CloseFloatConfig,
   openExpandedView: (() -> Unit)? = null,
   onClose: ((openMainAfter: Boolean?) -> Unit)? = null,
   content: @Composable BoxScope.() -> Unit,
@@ -366,7 +367,8 @@ fun DraggableFloat(
 
               // MOUNT CLOSE LOGIC
               if (closeConfig.enabled) {
-                if (!isCloseMounted && (abs(dragAmount.x) > mountThreshold || abs(dragAmount.y) > mountThreshold)) {
+                Log.d("DraggableFloat", "isCloseMounted: $isCloseMounted, isCloseVisible: $isCloseVisible")
+                if (!isCloseMounted && !isCloseVisible && (abs(dragAmount.x) > mountThreshold || abs(dragAmount.y) > mountThreshold)) {
                   closeContainerView.visibility = View.INVISIBLE
                   windowManager.addView(closeContainerView, closeLayoutParams)
                   isCloseMounted = true
@@ -376,6 +378,7 @@ fun DraggableFloat(
                   && (closeContainerView.width > 0 || closeContainerView.height > 0)
                 ) {
 
+                  // TODO: close view is sometimes not visible
                   if (closeContentSize == null) {
                     closeContentSize = IntSize(closeContainerView.width, closeContainerView.height)
                   }
@@ -583,13 +586,16 @@ fun DraggableFloat(
               )
             },
             onDragEnd = {
-              if (closeConfig.enabled && isCloseMounted && isCloseVisible) {
+              Log.d("DraggableFloat", "isCloseMounted: $isCloseMounted")
+              if (closeConfig.enabled && isCloseMounted) {
                 windowManager.removeView(closeContainerView)
                 isCloseMounted = false
-                isCloseVisible = false
 
-                if (withinCloseArea) {
-                  onClose?.let { it(false) }
+                if (isCloseVisible) {
+                  if (withinCloseArea) {
+                    onClose?.let { it(false) }
+                  }
+                  isCloseVisible = false
                 }
               }
 
@@ -650,7 +656,7 @@ private fun followFloat(
   targetContentSize: IntSize,
   dragAmount: Offset,
   screenSize: IntSize,
-  closeConfig: CloseFloatyConfig
+  closeConfig: CloseFloatConfig
 ): Point {
   val followerInitialCenter = PointF(
     followerInitialPoint.x + followerContentSize.width / 2f,
@@ -691,7 +697,7 @@ private fun followFloat(
 
 private fun getCloseInitialPoint(
   density: Density,
-  closeConfig: CloseFloatyConfig,
+  closeConfig: CloseFloatConfig,
   contentSize: IntSize,
   screenSize: IntSize,
 ): Point {
