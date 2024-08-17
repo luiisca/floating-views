@@ -19,6 +19,12 @@ object PermissionHelper {
     return Settings.canDrawOverlays(context)
   }
 
+  /**
+   * Starts the floating service if the overlay permission is granted, or requests the permission otherwise.
+   *
+   * @param context The service context
+   * @param serviceClass The class of the service to be started.
+   */
   fun startFloatServiceIfPermitted(context: Context, serviceClass: Class<*>) {
     if (canDrawOverlays(context)) {
       ContextCompat.startForegroundService(context, Intent(context, serviceClass))
