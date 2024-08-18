@@ -2,11 +2,11 @@ package io.github.luiisca.floating.views
 
 import android.app.Service
 import android.content.Context
+import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
 import android.graphics.Point
 import android.graphics.PointF
 import android.os.Build
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.ServiceCompat
 import io.github.luiisca.floating.views.ui.AdaptiveSizeWrapper
 import io.github.luiisca.floating.views.ui.CloseFloat
 import io.github.luiisca.floating.views.ui.DraggableFloat
@@ -42,7 +43,27 @@ enum class DraggableType {
     EXPANDED
 }
 
+sealed interface FloatConfig {
+    var startPointDp: PointF?
+    var startPointPx: PointF?
+    var draggingTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)
+    var snapToEdgeTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)
+    var snapToCloseTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)
+    var isSnapToEdgeEnabled: Boolean
+    var onTap: ((Offset) -> Unit)?
+    var onDragStart: ((offset: Offset) -> Unit)?
+    var onDrag: ((
+        change: PointerInputChange,
+        dragAmount: Offset,
+        newPoint: Point,
+        newAnimatedPoint: Point?) -> Unit)?
+    var onDragEnd: (() -> Unit)?
+}
+
 /**
+ * @property composable Jetpack Compose function defining the content of the floating view.
+ * @property viewFactory A function that creates an Android View to be displayed in the floating view.
+ * This is an alternative to using a Composable.
  * @property startPointDp Initial position of the floating view in density-independent pixels (dp).
  *
  * When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used
@@ -81,32 +102,12 @@ enum class DraggableType {
  *                                       stiffness = Spring.StiffnessLow
  *                                     )
  * @property isSnapToEdgeEnabled If true, the floating view snaps to the nearest screen edge on `dragEnd`.
+ *
+ * Default: `true`
  * @property onTap Callback triggered when the floating view is tapped.
  * @property onDragStart Callback triggered when dragging of the floating view begins.
  * @property onDrag Callback triggered during dragging of the floating view.
  * @property onDragEnd Callback triggered when dragging of the floating view ends.
- */
-sealed interface FloatConfig {
-    var startPointDp: PointF?
-    var startPointPx: PointF?
-    var draggingTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)
-    var snapToEdgeTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)
-    var snapToCloseTransitionSpec: (Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)
-    var isSnapToEdgeEnabled: Boolean
-    var onTap: ((Offset) -> Unit)?
-    var onDragStart: ((offset: Offset) -> Unit)?
-    var onDrag: ((
-        change: PointerInputChange,
-        dragAmount: Offset,
-        newPoint: Point,
-        newAnimatedPoint: Point?) -> Unit)?
-    var onDragEnd: (() -> Unit)?
-}
-
-/**
-* @property viewFactory A function that creates an Android View to be displayed in the floating view.
-* This is an alternative to using a Composable.
- * @property composable Jetpack Compose function defining the content of the floating view.
 */
 data class MainFloatConfig(
     val composable: (@Composable () -> Unit)? = null,
@@ -143,7 +144,14 @@ data class MainFloatConfig(
 
 /**
  * @property enabled Determines if the expanded floating view is active.
- * @property tapOutsideToClose Determines if tapping outside of expanded view should close it.
+ *
+ * Default: `true`
+ * @property tapOutsideToClose Set to true to add an overlay view that will close expanded view when tapped.
+ *
+ * Default: `true`
+ * @property dimAmount This is the amount of dimming to apply behind expanded view. Range is from 1.0 for completely opaque to 0.0 for no dim.
+ *
+ * Default: `0.5f`
  * @property composable Jetpack Compose function defining the content of the expanded view.
  *
  * Call close to remove expanded view (and overlay view if enabled) and add main view to windowManager again
@@ -151,7 +159,50 @@ data class MainFloatConfig(
  * This is an alternative to using a Composable.
  *
  * Call close to remove expanded view (and overlay view if enabled) and add main view to windowManager again
- * @property dimAmount This is the amount of dimming to apply behind expanded view. Range is from 1.0 for completely opaque to 0.0 for no dim.
+ * @property startPointDp Initial position of the floating view in density-independent pixels (dp).
+ *
+ * When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used
+ * @property startPointPx Initial position of the floating view in pixels (px).
+ *
+ * When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used
+ * @property draggingTransitionSpec Animation specification for dragging.
+ *
+ * Applied when `enableAnimations == true`.
+ *
+ * Default:
+ *
+ *                                  spring(
+ *                                      dampingRatio = Spring.DampingRatioNoBouncy,
+ *                                      stiffness = Spring.StiffnessHigh
+ *                                  )
+ * @property snapToEdgeTransitionSpec Animation specification for snapping to screen edge.
+ *
+ * Applied when `enableAnimations == true && isSnapToEdgeEnabled`.
+ *
+ * Default:
+ *
+ *                                    spring(
+ *                                      dampingRatio = Spring.DampingRatioMediumBouncy,
+ *                                      stiffness = Spring.StiffnessMedium
+ *                                    )
+ * @property snapToCloseTransitionSpec Animation specification for snapping to close float.
+ *
+ * Applied when `enableAnimations == true &&
+ *                                     closeConfig.closeBehavior == CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT`.
+ *
+ * Default:
+ *
+ *                                     spring(
+ *                                       dampingRatio = Spring.DampingRatioMediumBouncy,
+ *                                       stiffness = Spring.StiffnessLow
+ *                                     )
+ * @property isSnapToEdgeEnabled If true, the floating view snaps to the nearest screen edge on `dragEnd`.
+ *
+ * Default: `true`
+ * @property onTap Callback triggered when the floating view is tapped.
+ * @property onDragStart Callback triggered when dragging of the floating view begins.
+ * @property onDrag Callback triggered during dragging of the floating view.
+ * @property onDragEnd Callback triggered when dragging of the floating view ends.
  */
 data class ExpandedFloatConfig(
     val enabled: Boolean = true,
@@ -194,6 +245,8 @@ data class ExpandedFloatConfig(
  * Configuration class for the close floating view.
  *
  * @property enabled Determines if the close floating view is active.
+ *
+ * Default: `true`
  * @property composable Jetpack Compose function defining the content of the close floating view.
  * @property viewFactory A function that creates an Android View to be displayed in the close floating view.
  * This is an alternative to using a Composable.
@@ -255,13 +308,13 @@ data class ExpandedFloatConfig(
  *                           when their distance exceeds `closingThresholdDp` or `closingThresholdPx`.
  *
  *
- *                      Default: `CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT`
+ * Default: `CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT`
  *
  * @property followRate Controls the movement of the close float when following the main float.
  *
  * Only used when `closeConfig.closeBehavior == CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.
  *
- *                      Default: 0.1f
+ * Default: 0.1f
  */
 data class CloseFloatConfig(
     val enabled: Boolean = true,
@@ -291,7 +344,33 @@ data class CloseFloatConfig(
     var followRate: Float = 0.1f,
 )
 
-class FloatingViewsBuilder(
+/**
+ * Creates and manages multiple elements necessary for all floating views.
+ * 1. Main View: The primary floating element. Configured by [mainFloatConfig]
+ * 2. Close View: Used to remove floating views by dragging them close to it. Configured by [closeFloatConfig]
+ * 3. Expanded View: Provides additional functionality or information in a usually larger floating view. Configured by [expandedFloatConfig]
+ * 4. Overlay View: Enables closing the expanded view by tapping outside of it. Configured by [expandedFloatConfig], specifically [ExpandedFloatConfig.tapOutsideToClose]
+ *
+ * @param context The service context in which the floating views will be created.
+ * @param stopService Called after the last float view is dragged into the close area
+ * @param enableAnimations Whether to enable animations for the floating views.
+ *
+ * Default: `true`
+ * @param mainFloatConfig Configuration for the main floating view.
+ *
+ * Default:  [MainFloatConfig].
+ * @param closeFloatConfig Configuration for the close floating view.
+ *
+ * Default: [CloseFloatConfig].
+ * @param expandedFloatConfig Configuration for the expanded floating view.
+ *
+ * Default: [ExpandedFloatConfig].
+ *
+ * @see MainFloatConfig
+ * @see CloseFloatConfig
+ * @see ExpandedFloatConfig
+ */
+class FloatingViewsController(
     private val context: Context,
     private val stopService: () -> Unit,
     private val enableAnimations: Boolean = true,
@@ -318,17 +397,47 @@ class FloatingViewsBuilder(
     }
 
     /**
-     * Can be omitted for `service.startForeground` with custom notification or just pass custom parameters
+     * Elevates the current service to foreground status with a persistent customizable notification.
+     *
+     * Foreground services receive a higher priority, making them less likely to be terminated
+     * by the system under memory pressure.
+     *
+     * **Note:** Requires `FOREGROUND_SERVICE` permission in `AndroidManifest.xml`
+     *
+     * **Usage:** Call this method in your Service's `onCreate()` method, unless using a custom notification
+     *
+     * @param icon The resource ID for the notification icon. Defaults to `R.drawable.round_bubble_chart_24`
+     * @param title The notification title text. Defaults to "Floating views running"
+     *
+     * @throws IllegalStateException if not called from a Service context
      */
-    fun startForegroundWithDefaultNotification(icon: Int = R.drawable.round_bubble_chart_24, title: String = "Floating views running") {
-        val service = context as Service
+    fun initializeAsForegroundService(icon: Int = R.drawable.round_bubble_chart_24, title: String = "Floating views running") {
+        val service = context as? Service
+            ?: throw IllegalStateException("This function must be called from a Service context")
+
         val notificationHelper = NotificationHelper(service)
         notificationHelper.createNotificationChannel()
 
-        service.startForeground(notificationHelper.notificationId, notificationHelper.createDefaultNotification(icon, title))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ServiceCompat.startForeground(
+                service,
+                notificationHelper.notificationId,
+                notificationHelper.createDefaultNotification(icon, title),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST
+            )
+        } else {
+            service.startForeground(notificationHelper.notificationId, notificationHelper.createDefaultNotification(icon, title))
+        }
     }
 
-    fun addFloat() {
+    /**
+     * Creates and starts a new dynamic, interactive floating view.
+     *
+     * **Call this method:**
+     * - In `onCreate()` to create a single floating view for the service lifetime.
+     * - In `onStartCommand()` to create a new floating view each time the service is started.
+     */
+    fun startDynamicFloatingView() {
         floatsCount += 1
 
         createFloatViews = CreateFloatViews(
@@ -349,7 +458,10 @@ class FloatingViewsBuilder(
         )
     }
 
-    fun removeAllViews() {
+    /**
+     * Removes all views added while the Service was alive
+     */
+    fun stopAllDynamicFloatingViews() {
         addedViews.forEach { view ->
             try {
                 windowManager.removeView(view)
@@ -399,7 +511,7 @@ class FloatingViewsBuilder(
         addToComposeLifecycle(closeFloat)
     }
 
-    fun addToComposeLifecycle(composable: ComposeView) {
+    private fun addToComposeLifecycle(composable: ComposeView) {
         composeOwner.attachToDecorView(composable)
         if (!isComposeOwnerInit) {
             composeOwner.onCreate()
