@@ -61,18 +61,17 @@ sealed interface FloatConfig {
 }
 
 /**
- * @property composable Jetpack Compose function defining the content of the floating view.
- * @property viewFactory A function that creates an Android View to be displayed in the floating view.
- * This is an alternative to using a Composable.
+ * @property composable The Composable to be rendered inside the floating view. If null, [viewFactory] is used.
+ * @property viewFactory Factory function to create a traditional Android view inside the floating view. If null, [composable] is used.
  * @property startPointDp Initial position of the floating view in density-independent pixels (dp).
  *
- * When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used
+ * When neither [startPointDp] nor [startPointPx] are provided `PointF(0,0)` is used.
  * @property startPointPx Initial position of the floating view in pixels (px).
  *
- * When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used
+ * When neither [startPointDp] nor [startPointPx] are provided `PointF(0,0)` is used.
  * @property draggingTransitionSpec Animation specification for dragging.
  *
- * Applied when `enableAnimations == true`.
+ * Applied when [FloatingViewsController.enableAnimations] is `true`.
  *
  * Default:
  *
@@ -82,7 +81,7 @@ sealed interface FloatConfig {
  *                                  )
  * @property snapToEdgeTransitionSpec Animation specification for snapping to screen edge.
  *
- * Applied when `enableAnimations == true && isSnapToEdgeEnabled`.
+ * Applied when [FloatingViewsController.enableAnimations] is `true` and [isSnapToEdgeEnabled] is `true`.
  *
  * Default:
  *
@@ -92,8 +91,7 @@ sealed interface FloatConfig {
  *                                    )
  * @property snapToCloseTransitionSpec Animation specification for snapping to close float.
  *
- * Applied when `enableAnimations == true &&
- *                                     closeConfig.closeBehavior == CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT`.
+ * Applied when [FloatingViewsController.enableAnimations] is `true` and [CloseFloatConfig.closeBehavior] is [CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT].
  *
  * Default:
  *
@@ -101,7 +99,7 @@ sealed interface FloatConfig {
  *                                       dampingRatio = Spring.DampingRatioMediumBouncy,
  *                                       stiffness = Spring.StiffnessLow
  *                                     )
- * @property isSnapToEdgeEnabled If true, the floating view snaps to the nearest screen edge on `dragEnd`.
+ * @property isSnapToEdgeEnabled If `true`, the floating view will snap to the nearest screen edge when dragging ends.
  *
  * Default: `true`
  * @property onTap Callback triggered when the floating view is tapped.
@@ -143,31 +141,26 @@ data class MainFloatConfig(
 ): FloatConfig
 
 /**
- * @property enabled Determines if the expanded floating view is active.
+ * @property enabled If `true`, enables expanded view mode.
  *
  * Default: `true`
- * @property tapOutsideToClose Set to true to add an overlay view that will close expanded view when tapped.
+ * @property tapOutsideToClose If `true` adds an overlay view that will close expanded view when tapped.
  *
  * Default: `true`
- * @property dimAmount This is the amount of dimming to apply behind expanded view. Range is from 1.0 for completely opaque to 0.0 for no dim.
+ * @property dimAmount Controls the dimming amount of the background when the view is expanded. Range is from 1.0 for completely opaque to 0.0 for no dim.
  *
  * Default: `0.5f`
- * @property composable Jetpack Compose function defining the content of the expanded view.
- *
- * Call close to remove expanded view (and overlay view if enabled) and add main view to windowManager again
- * @property viewFactory A function that creates an Android View to be displayed in the floating view.
- * This is an alternative to using a Composable.
- *
- * Call close to remove expanded view (and overlay view if enabled) and add main view to windowManager again
+ * @property composable The Composable to be rendered inside the expanded view. If null, [viewFactory] is used. Call close to remove expanded view.
+ * @property viewFactory Factory function to create a traditional Android view inside the expanded view. If null, [composable] is used. Call close to remove expanded view.
  * @property startPointDp Initial position of the floating view in density-independent pixels (dp).
  *
- * When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used
+ * When neither [startPointDp] nor [startPointPx] are provided `PointF(0,0)` is used.
  * @property startPointPx Initial position of the floating view in pixels (px).
  *
- * When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used
+ * When neither [startPointDp] nor [startPointPx] are provided `PointF(0,0)` is used.
  * @property draggingTransitionSpec Animation specification for dragging.
  *
- * Applied when `enableAnimations == true`.
+ * Applied when [FloatingViewsController.enableAnimations] is `true`.
  *
  * Default:
  *
@@ -177,7 +170,7 @@ data class MainFloatConfig(
  *                                  )
  * @property snapToEdgeTransitionSpec Animation specification for snapping to screen edge.
  *
- * Applied when `enableAnimations == true && isSnapToEdgeEnabled`.
+ * Applied when [FloatingViewsController.enableAnimations] is `true` and [isSnapToEdgeEnabled] is `true`.
  *
  * Default:
  *
@@ -187,8 +180,7 @@ data class MainFloatConfig(
  *                                    )
  * @property snapToCloseTransitionSpec Animation specification for snapping to close float.
  *
- * Applied when `enableAnimations == true &&
- *                                     closeConfig.closeBehavior == CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT`.
+ * Applied when [FloatingViewsController.enableAnimations] is `true` and [CloseFloatConfig.closeBehavior] is [CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT].
  *
  * Default:
  *
@@ -196,7 +188,7 @@ data class MainFloatConfig(
  *                                       dampingRatio = Spring.DampingRatioMediumBouncy,
  *                                       stiffness = Spring.StiffnessLow
  *                                     )
- * @property isSnapToEdgeEnabled If true, the floating view snaps to the nearest screen edge on `dragEnd`.
+ * @property isSnapToEdgeEnabled If `true`, the floating view will snap to the nearest screen edge when dragging ends.
  *
  * Default: `true`
  * @property onTap Callback triggered when the floating view is tapped.
@@ -244,43 +236,42 @@ data class ExpandedFloatConfig(
 /**
  * Configuration class for the close floating view.
  *
- * @property enabled Determines if the close floating view is active.
+ * @property enabled If `true`, enables the close float behavior.
  *
  * Default: `true`
- * @property composable Jetpack Compose function defining the content of the close floating view.
- * @property viewFactory A function that creates an Android View to be displayed in the close floating view.
- * This is an alternative to using a Composable.
- * @property startPointDp The initial position of the close floating view in density-independent pixels (dp).
+ * @property composable The Composable to be rendered inside the close floating view. If null, [viewFactory] is used.
+ * @property viewFactory Factory function to create a traditional Android view inside the close floating view. If null, [composable] is used.
+ * @property startPointDp Initial position of the close floating view in density-independent pixels (dp).
  *
- * When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used
- * @property startPointPx The initial position of the close floating view in pixels (px).
+ * When neither [startPointDp] nor [startPointPx] are provided `PointF(0,0)` is used.
+ * @property startPointPx Initial position of the close floating view in pixels (px).
  *
- * When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used
- * @property mountThresholdDp The drag distance required to show the close float, in density-independent pixels (dp).
+ * When neither [startPointDp] nor [startPointPx] are provided `PointF(0,0)` is used.
+ * @property mountThresholdDp Dragging distance required to show the close float, in density-independent pixels (dp).
  *                            A larger value requires more dragging before the close float becomes visible.
  *
- * When neither `mountThresholdDp` nor `mountThresholdPx` are provided `1.dp` is used
- * @property mountThresholdPx The drag distance required to show the close float, in pixels (px).
+ * When neither [mountThresholdDp] nor [mountThresholdPx] are provided `1.dp` is used.
+ * @property mountThresholdPx Dragging distance required to show the close float, in pixels (px).
  *                            A larger value requires more dragging before the close float becomes visible.
  *
- * When neither `mountThresholdDp` nor `mountThresholdPx` are provided `1.dp` is used
- * @property closingThresholdDp The distance (in density-independent pixels) between the main float
- * and the close float that triggers the `closeBehavior`.
+ * When neither [mountThresholdDp] nor [mountThresholdPx] are provided `1.dp` is used.
+ * @property closingThresholdDp Dragging distance (in density-independent pixels) between the main float
+ * and the close float that triggers a [CloseFloatConfig.closeBehavior].
  *
- * When neither `closingThresholdDp` nor `closingThresholdPx` are provided `100.dp` is used
- * @property closingThresholdPx The distance (in pixels) between the main float and the close float
- * that triggers the `closeBehavior`.
+ * When neither [closingThresholdDp] nor [closingThresholdPx] are provided `100.dp` is used.
+ * @property closingThresholdPx Dragging distance (in pixels) between the main float and the close float
+ * that triggers a [CloseFloatConfig.closeBehavior].
  *
- * When neither `closingThresholdDp` nor `closingThresholdPx` are provided `100.dp` is used
- * @property bottomPaddingDp The bottom padding for the close float in density-independent pixels (dp).
+ * When neither [closingThresholdDp] nor [closingThresholdPx] are provided `100.dp` is used.
+ * @property bottomPaddingDp Bottom padding for the close float in density-independent pixels (dp).
  *
- * When neither `bottomPaddingDp` nor `bottomPaddingPx` are provided `16.dp` is used
- * @property bottomPaddingPx The bottom padding for the close float in pixels (px).
+ * When neither [bottomPaddingDp] nor [bottomPaddingPx] are provided `16.dp` is used.
+ * @property bottomPaddingPx Bottom padding for the close float in pixels (px).
  *
- * When neither `bottomPaddingDp` nor `bottomPaddingPx` are provided `16.dp` is used
- * @property draggingTransitionSpec Defines the animation for dragging the close float.
+ * When neither [bottomPaddingDp] nor [bottomPaddingPx] are provided `16.dp` is used.
+ * @property draggingTransitionSpec Animation specification for dragging.
  *
- * Used when `enableAnimations == true && closeConfig.closeBehavior == CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.
+ * Applied when [FloatingViewsController.enableAnimations] is `true` and [CloseFloatConfig.closeBehavior] is [CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT].
  *
  * Default:
  *
@@ -288,9 +279,9 @@ data class ExpandedFloatConfig(
  *                                      dampingRatio = Spring.DampingRatioNoBouncy,
  *                                      stiffness = Spring.StiffnessHigh
  *                                  )
- * @property snapToMainTransitionSpec Defines the animation for the close float snapping to the main float.
+ * @property snapToMainTransitionSpec Animation specification for snapping to main float.
  *
- * Used when `enableAnimations == true && closeConfig.closeBehavior == CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.
+ * Applied when [FloatingViewsController.enableAnimations] is `true` and [CloseFloatConfig.closeBehavior] is [CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT].
  *
  * Default:
  *
@@ -301,18 +292,17 @@ data class ExpandedFloatConfig(
  *
  * @property closeBehavior Determines how the close float interacts with the main float.
  *
- * * `CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`: The close float follows the main float,
- *                           moving based on `followRate`. It snaps to the main float when their distance
- *                           exceeds `closingThresholdDp` or `closingThresholdPx`.
- * * `CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT`: The main float snaps to the close float
- *                           when their distance exceeds `closingThresholdDp` or `closingThresholdPx`.
+ * * [CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT]: The close float follows the main float,
+ * moving based on [followRate]. It snaps to the main float when their distance
+ * exceeds [closingThresholdDp] or [closingThresholdPx].
+ * * [CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT]: The main float snaps to the close float
+ * when their distance exceeds [closingThresholdDp] or [closingThresholdPx].
  *
+ * Default: [CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT]
  *
- * Default: `CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT`
+ * @property followRate Defines the rate at which the close float follows the main float when dragged.
  *
- * @property followRate Controls the movement of the close float when following the main float.
- *
- * Only used when `closeConfig.closeBehavior == CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.
+ * Only used when [CloseFloatConfig.closeBehavior] is [CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT].
  *
  * Default: 0.1f
  */
