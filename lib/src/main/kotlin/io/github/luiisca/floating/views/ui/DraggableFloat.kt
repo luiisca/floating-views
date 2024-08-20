@@ -31,6 +31,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.PointerInputChange
@@ -73,7 +74,8 @@ fun DraggableFloat(
   layoutParams: WindowManager.LayoutParams,
   closeLayoutParams: WindowManager.LayoutParams,
   config: FloatingViewsConfig,
-  onClose: ((openMainAfter: Boolean?) -> Unit)? = null,
+  onKey: (event: KeyEvent) -> Boolean,
+  onDestroy: (() -> Unit)? = null,
   onTap: ((Offset) -> Unit)? = null,
   onDragStart: ((offset: Offset) -> Unit)? = null,
   onDrag: ((
@@ -117,13 +119,7 @@ fun DraggableFloat(
       .wrapContentHeight(Alignment.Top, unbounded = true)
       .systemGestureExclusion()
       .onKeyEvent { event ->
-        if (event.key == Key.Back) {
-          onClose?.let { it(true) }
-
-          true
-        } else {
-          false
-        }
+        onKey(event)
       }
       .focusRequester(focusRequester)
       .focusable()
@@ -575,7 +571,7 @@ fun DraggableFloat(
                 }
 
                 if (withinCloseArea) {
-                  onClose?.let { it(false) }
+                  onDestroy?.let { it() }
                 }
               }
 

@@ -22,6 +22,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
@@ -514,14 +516,21 @@ class CreateFloatViews(
                     closeLayoutParams = closeLayoutParams,
                     layoutParams = mainLayoutParams,
                     config = config,
-                    onClose = { openMainAfter ->
+                    onKey = { event ->
+                        if (event.key == Key.Back) {
+                            tryCloseDraggable()
+
+                            true
+                        } else {
+                            false
+                        }
+                    },
+                    onDestroy = {
+                        tryCloseDraggable(true)
                         if (getFloatsCount() <= 1) {
                             stopService()
                         }
-                        if (openMainAfter == false) {
-                            setFloatsCount(getFloatsCount() - 1)
-                        }
-                        tryCloseDraggable(openMainAfter ?: false)
+                        setFloatsCount(getFloatsCount() - 1)
                     },
                     onTap = { offset ->
                         if (config.expanded.enabled) {
@@ -577,14 +586,21 @@ class CreateFloatViews(
                     closeLayoutParams = closeLayoutParams,
                     layoutParams = expandedLayoutParams,
                     config = config,
-                    onClose = { openMainAfter ->
+                    onKey = { event ->
+                        if (event.key == Key.Back) {
+                            tryCloseDraggable()
+
+                            true
+                        } else {
+                            false
+                        }
+                    },
+                    onDestroy = {
+                        tryCloseDraggable(true)
                         if (getFloatsCount() <= 1) {
                             stopService()
                         }
-                        if (openMainAfter == false) {
-                            setFloatsCount(getFloatsCount() - 1)
-                        }
-                        tryCloseDraggable(openMainAfter ?: false)
+                        setFloatsCount(getFloatsCount() - 1)
                     },
                     onTap = { offset ->
                         config.expanded.onTap?.let { it(offset) }
@@ -694,12 +710,12 @@ class CreateFloatViews(
         createExpandedView()
     }
 
-    private fun tryCloseDraggable(openMainAfter: Boolean = true) {
+    private fun tryCloseDraggable(destroy: Boolean = false) {
         tryRemoveView(mainView)
         tryRemoveView(expandedView)
         tryRemoveView(overlayView)
 
-        if (openMainAfter) {
+        if (!destroy) {
             createMainView()
         }
     }
