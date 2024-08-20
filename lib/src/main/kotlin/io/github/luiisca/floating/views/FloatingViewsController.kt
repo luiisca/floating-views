@@ -7,6 +7,7 @@ import android.graphics.PixelFormat
 import android.graphics.Point
 import android.graphics.PointF
 import android.os.Build
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -440,6 +441,7 @@ class FloatingViewsController(
             try {
                 windowManager.removeView(view)
             } catch (_: IllegalArgumentException) {
+                Log.e("error", "could not remove view")
             }
         }
         addedViews.clear()
@@ -706,6 +708,7 @@ class CreateFloatViews(
         try {
             windowManager.removeView(view)
         } catch (_: IllegalArgumentException) {
+            Log.e("error", "could not remove view")
         }
     }
 

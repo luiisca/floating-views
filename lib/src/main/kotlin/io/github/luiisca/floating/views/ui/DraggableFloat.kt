@@ -295,7 +295,7 @@ fun DraggableFloat(
             )
           }
 
-          if (config.close.enabled && closeAnimPoint != null && isCloseMounted) {
+          if (config.close.enabled && closeAnimPoint != null) {
             val closeTransition =
               updateTransition(targetState = closeAnimPoint!!, label = "close point transition")
             closeTransitionSpec = when (closeAnimationState) {
@@ -313,13 +313,14 @@ fun DraggableFloat(
             ) { it.y }
 
             LaunchedEffect(key1 = closeAnimatedX, key2 = closeAnimatedY) {
-
-              windowManager.updateViewLayout(closeView, closeLayoutParams.apply {
-                x = closeAnimatedX
-                y = closeAnimatedY
-              })
-              closeView.visibility = View.VISIBLE
-              isCloseVisible = true
+              if (isCloseMounted) {
+                windowManager.updateViewLayout(closeView, closeLayoutParams.apply {
+                  x = closeAnimatedX
+                  y = closeAnimatedY
+                })
+                closeView.visibility = View.VISIBLE
+                isCloseVisible = true
+              }
             }
           }
         }
@@ -347,17 +348,18 @@ fun DraggableFloat(
 
               // MOUNT CLOSE LOGIC
               if (config.close.enabled) {
-                Log.d("DraggableFloat", "isCloseMounted: $isCloseMounted, isCloseVisible: $isCloseVisible")
                 if (!isCloseMounted && !isCloseVisible && (abs(dragAmount.x) > mountThreshold || abs(dragAmount.y) > mountThreshold)) {
-                  windowManager.addView(closeView, closeLayoutParams)
+                  try {
+                    windowManager.addView(closeView, closeLayoutParams)
+                  } catch (_: IllegalArgumentException) {
+                    Log.e("error", "could not remove view")
+                  }
                   isCloseMounted = true
                 }
                 if (isCloseMounted
                   && !isCloseVisible
                   && (closeView.width > 0 || closeView.height > 0)
                 ) {
-
-                  // TODO: close view is sometimes not visible
                   if (closeContentSize == null) {
                     closeContentSize = IntSize(closeView.width, closeView.height)
                   }
@@ -562,15 +564,18 @@ fun DraggableFloat(
               )
             },
             onDragEnd = {
-              if (config.close.enabled && isCloseMounted) {
-                windowManager.removeView(closeView)
+              if (config.close.enabled) {
                 isCloseMounted = false
+                isCloseVisible = false
 
-                if (isCloseVisible) {
-                  if (withinCloseArea) {
-                    onClose?.let { it(false) }
-                  }
-                  isCloseVisible = false
+                try {
+                  windowManager.removeView(closeView)
+                } catch (_: IllegalArgumentException) {
+                  Log.e("error", "could not remove view")
+                }
+
+                if (withinCloseArea) {
+                  onClose?.let { it(false) }
                 }
               }
 
