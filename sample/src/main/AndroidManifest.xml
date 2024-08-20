@@ -26,7 +26,7 @@
              - dataSync, mediaPlayback, phoneCall, location, connectedDevice, mediaProjection, camera, microphone
              - If none of these fit, use "specialUse" as shown here -->
         <service
-            android:name=".Service"
+            android:name="io.github.luiisca.floating.views.FloatingViewsService"
             android:enabled="true"
             android:foregroundServiceType="specialUse">
             <!-- Required for "specialUse" type. Describe your use case for app store review -->

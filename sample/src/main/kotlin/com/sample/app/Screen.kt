@@ -1,19 +1,9 @@
 package com.sample.app
 
-import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeFloatingActionButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,52 +12,69 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
+import com.sample.app.ui.ExpandedView
+import com.sample.app.ui.FloatView
+import io.github.luiisca.floating.views.CloseBehavior
+import io.github.luiisca.floating.views.CloseFloatConfig
+import io.github.luiisca.floating.views.ExpandedFloatConfig
+import io.github.luiisca.floating.views.FloatingViewsConfig
+import io.github.luiisca.floating.views.MainFloatConfig
 import io.github.luiisca.floating.views.helpers.FloatServiceStateManager
-import io.github.luiisca.floating.views.helpers.PermissionHelper
+import io.github.luiisca.floating.views.helpers.FloatingViewsManager
 
 @Composable
 fun App() {
-  Scaffold(
-    floatingActionButton = {
-      val context = LocalContext.current
-      val isServiceRunning by FloatServiceStateManager.isServiceRunning.collectAsState()
-      val padding = 16.dp
+  Scaffold { innerPadding ->
+    println(innerPadding)
 
-      Column(
-        horizontalAlignment = Alignment.End,
-      ) {
-        if (isServiceRunning) {
-          FloatingActionButton(onClick = {
-            context.stopService(Intent(context, Service::class.java))
-          }) {
-            Icon(
-              imageVector = Icons.Default.Close,
-              contentDescription = "Stop service",
-              modifier = Modifier.size(20.dp)
-            )
-          }
-        }
+    val context = LocalContext.current
+    val isServiceRunning by FloatServiceStateManager.isServiceRunning.collectAsState()
 
-        Spacer(modifier = Modifier.size(padding))
-
-        LargeFloatingActionButton(
-          onClick = {
-            PermissionHelper.startFloatServiceIfPermitted(context, Service::class.java)
-          },
-          containerColor = MaterialTheme.colorScheme.primaryContainer,
-          contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        ) {
-          Icon(
-            imageVector = Icons.Default.Add,
-            contentDescription = "Create new float",
-            modifier = Modifier.size(28.dp)
+    Column(
+      modifier = Modifier.fillMaxSize(),
+      verticalArrangement = Arrangement.Center,
+      horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+      Button(onClick = {
+        val config = FloatingViewsConfig(
+          enableAnimations = false,
+          main = MainFloatConfig(
+            composable = { FloatView() },
+            // Add other main float configurations here
+          ),
+          close = CloseFloatConfig(
+            closeBehavior = CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT,
+            // Add other close float configurations here
+          ),
+          expanded = ExpandedFloatConfig(
+            composable = {close -> ExpandedView(close) },
+            // Add other expanded float configurations here
           )
-        }
+        )
+        FloatingViewsManager.startFloatServiceIfPermitted(context, config)
+      }) {
+        Text(text = "Add counter")
+      }
+      Button(onClick = {
+        val config = FloatingViewsConfig(
+          main = MainFloatConfig(
+            composable = { FloatView() },
+            // Add other main float configurations here
+          ),
+          close = CloseFloatConfig(
+            closeBehavior = CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT,
+            // Add other close float configurations here
+          ),
+          expanded = ExpandedFloatConfig(
+            composable = {close -> ExpandedView(close) },
+            // Add other expanded float configurations here
+          )
+        )
+        FloatingViewsManager.startFloatServiceIfPermitted(context, config)
+      }) {
+        Text(text = "Add timer")
       }
     }
-  ) { innerPadding ->
-    println(innerPadding)
   }
 }
 
