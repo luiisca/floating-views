@@ -394,6 +394,12 @@ fun DraggableFloat(
                   if (config.enableAnimations) {
                     closeAnimationState = CloseAnimationState.DRAGGING
                     closeAnimPoint = closeCrrPoint
+
+                    // set close visible value immediately instead of waiting for animated value,
+                    // since here close float does not move.
+                    if (config.close.closeBehavior == CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT) {
+                      isCloseVisible = true
+                    }
                   } else {
                     windowManager.updateViewLayout(closeView, closeLayoutParams.apply {
                       x = closeCrrPoint!!.x
@@ -412,8 +418,8 @@ fun DraggableFloat(
                   val wasWithinCloseArea = withinCloseArea
 
                   val centerPointF = PointF(
-                    (constrainedCrrPoint.x + contentSize.width / 2).toFloat(),
-                    (constrainedCrrPoint.y + contentSize.height / 2).toFloat()
+                    (crrPoint.x + contentSize.width / 2).toFloat(),
+                    (crrPoint.y + contentSize.height / 2).toFloat()
                   )
                   withinCloseArea = isCloseVisible && isWithinCloseArea(
                     centerPointF,
@@ -423,11 +429,10 @@ fun DraggableFloat(
                     ),
                     closingThreshold + closeView.width / 2
                   )
-                  val isWithinCloseArea = withinCloseArea
 
                   when (config.close.closeBehavior) {
                     CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT -> {
-                      if (isWithinCloseArea) {
+                      if (withinCloseArea) {
                         interruptMovState = InterruptMovState.DRAGGING
 
                         if (!wasWithinCloseArea) {
@@ -455,7 +460,7 @@ fun DraggableFloat(
                     }
 
                     CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT -> {
-                      if (isWithinCloseArea) {
+                      if (withinCloseArea) {
                         interruptMovState = InterruptMovState.CLOSE_DRAGGING
 
                         val newSnapPoint = Point(
@@ -489,8 +494,6 @@ fun DraggableFloat(
                     null -> TODO()
                   }
                 }
-
-                // bottom back
               }
               //
 
