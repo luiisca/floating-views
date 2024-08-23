@@ -477,6 +477,7 @@ class CreateFloatViews(
     )
     private var mainLayoutParams = baseLayoutParams().apply {
         flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
         x = mainStartPoint.x
         y = mainStartPoint.y

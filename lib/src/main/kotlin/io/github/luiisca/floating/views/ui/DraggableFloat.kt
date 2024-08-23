@@ -30,9 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
@@ -50,6 +48,7 @@ import io.github.luiisca.floating.views.CloseBehavior
 import io.github.luiisca.floating.views.FloatingViewsConfig
 import io.github.luiisca.floating.views.helpers.getScreenSizeWithoutInsets
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 enum class AnimationState {
   DRAGGING,
@@ -113,7 +112,6 @@ fun DraggableFloat(
       .zIndex(10f)
       .onSizeChanged { size ->
         contentSize = size
-        windowManager.updateViewLayout(containerView, layoutParams)
       }
       .wrapContentWidth(Alignment.Start, unbounded = true)
       .wrapContentHeight(Alignment.Top, unbounded = true)
@@ -133,7 +131,10 @@ fun DraggableFloat(
       .let { mod ->
         var dragAmountState by remember { mutableStateOf<Offset?>(null) }
 
+        var initialPoint by remember { mutableStateOf(Point(layoutParams.x, layoutParams.y))}
         var crrPoint by remember { mutableStateOf(Point(layoutParams.x, layoutParams.y)) }
+        var accDrag by remember { mutableStateOf(PointF(0f,0f)) }
+        var constrainedCrrPoint by remember { mutableStateOf(Point(layoutParams.x, layoutParams.y)) }
         var animPoint by remember { mutableStateOf(Point(layoutParams.x, layoutParams.y)) }
 
         var isCloseMounted by remember { mutableStateOf(false) }
@@ -207,7 +208,7 @@ fun DraggableFloat(
         }
 
         // update close point when orientation changes and close float is visible to adapt it to
-        // new screenSize and crrPoint
+        // new screenSize and constrainedCrrPoint
         if (config.close.enabled
           && isCloseVisible
           && contentSize != IntSize.Zero
@@ -237,7 +238,7 @@ fun DraggableFloat(
                   followerInitialPoint = initialClosePoint!!,
                   followerCrrPoint = closeCrrPoint!!,
                   followerContentSize = closeContentSize!!,
-                  targetCrrPoint = crrPoint,
+                  targetCrrPoint = constrainedCrrPoint,
                   targetContentSize = contentSize,
                   dragAmount = dragAmountState!!,
                   screenSize = screenSize,
@@ -283,7 +284,7 @@ fun DraggableFloat(
             onDrag?.invoke(
               newChange!!,
               newDragAmount!!,
-              crrPoint,
+              constrainedCrrPoint,
               Point(
                 animatedX,
                 animatedY
@@ -331,15 +332,17 @@ fun DraggableFloat(
             },
             onDrag = { change, dragAmount ->
               dragAmountState = dragAmount
+              accDrag = PointF(
+                accDrag.x + dragAmount.x,
+                accDrag.y + dragAmount.y,
+              )
               crrPoint = Point(
-                (crrPoint.x + dragAmount.x.toInt()).coerceIn(
-                  0,
-                  coerceInMax(screenSize.width - contentSize.width)
-                ),
-                (crrPoint.y + dragAmount.y.toInt()).coerceIn(
-                  0,
-                  coerceInMax(screenSize.height - contentSize.height)
-                )
+                initialPoint.x + accDrag.x.roundToInt(),
+                initialPoint.y + accDrag.y.roundToInt()
+              )
+              constrainedCrrPoint = Point(
+                crrPoint.x.coerceIn(0, coerceInMax(screenSize.width - contentSize.width)),
+                crrPoint.y.coerceIn(0, coerceInMax(screenSize.height - contentSize.height))
               )
 
               // MOUNT CLOSE LOGIC
@@ -375,7 +378,7 @@ fun DraggableFloat(
                       followerInitialPoint = initialClosePoint!!,
                       followerCrrPoint = closeCrrPoint!!,
                       followerContentSize = closeContentSize!!,
-                      targetCrrPoint = crrPoint,
+                      targetCrrPoint = constrainedCrrPoint,
                       targetContentSize = contentSize,
                       dragAmount = dragAmount,
                       screenSize = screenSize,
@@ -409,8 +412,8 @@ fun DraggableFloat(
                   val wasWithinCloseArea = withinCloseArea
 
                   val centerPointF = PointF(
-                    (crrPoint.x + contentSize.width / 2).toFloat(),
-                    (crrPoint.y + contentSize.height / 2).toFloat()
+                    (constrainedCrrPoint.x + contentSize.width / 2).toFloat(),
+                    (constrainedCrrPoint.y + contentSize.height / 2).toFloat()
                   )
                   withinCloseArea = isCloseVisible && isWithinCloseArea(
                     centerPointF,
@@ -505,7 +508,7 @@ fun DraggableFloat(
                   followerInitialPoint = initialClosePoint!!,
                   followerCrrPoint = closeCrrPoint!!,
                   followerContentSize = closeContentSize!!,
-                  targetCrrPoint = crrPoint,
+                  targetCrrPoint = constrainedCrrPoint,
                   targetContentSize = contentSize,
                   dragAmount = dragAmount,
                   screenSize = screenSize,
@@ -555,11 +558,13 @@ fun DraggableFloat(
               onDrag?.invoke(
                 change,
                 dragAmount,
-                crrPoint,
+                constrainedCrrPoint,
                 null,
               )
             },
             onDragEnd = {
+              accDrag = PointF(0f,0f)
+
               if (config.close.enabled) {
                 isCloseMounted = false
                 isCloseVisible = false
@@ -576,6 +581,8 @@ fun DraggableFloat(
               }
 
               if (config.main.isSnapToEdgeEnabled) {
+                var newPoint = Point(0, constrainedCrrPoint.y)
+
                 if (config.enableAnimations) {
                   animationState = AnimationState.SNAP_TO_EDGE
 
@@ -583,32 +590,31 @@ fun DraggableFloat(
                     initialValue = (crrPoint.x + contentSize.width / 2).toFloat(),
                     initialVelocity = velocityTracker.calculateVelocity().x
                   )
-                  val newPoint = Point(
-                    if (decayCenterX >= screenSize.width * 0.5f) {
-                      screenSize.width - contentSize.width
-                    } else {
-                      0
-                    },
-                    crrPoint.y
-                  )
+                  if (decayCenterX >= screenSize.width * 0.5f) {
+                    newPoint = Point(
+                      screenSize.width - contentSize.width,
+                      newPoint.y
+                    )
+                  }
 
                   animPoint = newPoint
-                  crrPoint = newPoint
                 } else {
-                  val newPoint = Point(
-                    if (crrPoint.x + contentSize.width / 2 >= screenSize.width * 0.5) {
-                      screenSize.width - contentSize.width
-                    } else {
-                      0
-                    },
-                    layoutParams.y
-                  )
+                  if (crrPoint.x + contentSize.width / 2 >= screenSize.width * 0.5) {
+                    newPoint = Point(
+                      screenSize.width - contentSize.width,
+                      newPoint.y
+                    )
+                  }
                   windowManager.updateViewLayout(containerView, layoutParams.apply {
                     x = newPoint.x
                     y = newPoint.y
                   })
-                  crrPoint = newPoint
                 }
+
+                initialPoint = newPoint
+
+                constrainedCrrPoint = newPoint
+                crrPoint = newPoint
               }
               onDragEnd?.invoke()
             }
