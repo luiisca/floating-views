@@ -22,8 +22,6 @@ class FloatingViewsService: Service() {
 
     // elevate service to foreground status to make it less likely to be terminated by the system under memory pressure
     floatingViewsController.initializeAsForegroundService()
-
-    // Optional: React to service running state changes
     FloatServiceStateManager.setServiceRunning(true)
   }
 
@@ -43,8 +41,6 @@ class FloatingViewsService: Service() {
 
     // Removes all views added while the Service was alive
     floatingViewsController.stopAllDynamicFloatingViews()
-
-    // Optional: React to service running state changes
     FloatServiceStateManager.setServiceRunning(false)
   }
 }

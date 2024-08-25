@@ -42,6 +42,16 @@ object FloatingViewsManager {
   }
 
   /**
+   * Stops the floating service if running.
+   *
+   * @param context The service context
+   * @param serviceClass The class of the service to be stopped.
+   */
+  fun stopFloatService(context: Context, serviceClass: Class<*> = FloatingViewsService::class.java) {
+    context.stopService(Intent(context, serviceClass))
+  }
+
+  /**
    * Display over other apps permission is not needed for versions older than M
    */
   private fun canDrawOverlays(context: Context): Boolean {
