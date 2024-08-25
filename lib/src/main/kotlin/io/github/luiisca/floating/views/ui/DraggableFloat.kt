@@ -1,5 +1,6 @@
 package io.github.luiisca.floating.views.ui
 
+import android.content.res.Configuration
 import android.graphics.Point
 import android.graphics.PointF
 import android.util.Log
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -90,16 +92,20 @@ fun DraggableFloat(
   val context = LocalContext.current
   val density = LocalDensity.current
   val configuration = LocalConfiguration.current
+  val orientation by remember(configuration) { derivedStateOf {
+    when (configuration.orientation) {
+      Configuration.ORIENTATION_PORTRAIT -> "portrait"
+      Configuration.ORIENTATION_LANDSCAPE -> "landscape"
+      else -> "undefined"
+    }
+  }}
   var screenSize by remember {
     mutableStateOf(
       getScreenSizeWithoutInsets(
-        context,
-        density,
-        configuration
+        context
       )
     )
   }
-
   var contentSize by remember { mutableStateOf(IntSize.Zero) }
 
   LaunchedEffect(key1 = Unit) {
@@ -169,59 +175,51 @@ fun DraggableFloat(
         var interruptMovState by remember { mutableStateOf<InterruptMovState?>(null) }
 
         // snap main float to some edge when screen orientation or contentSize changes
-        LaunchedEffect(key1 = configuration, key2 = contentSize) {
+        LaunchedEffect(orientation, contentSize) {
           val oldScreenSize = screenSize
-          val newScreenSize = getScreenSizeWithoutInsets(context, density, configuration)
-          screenSize = newScreenSize
+          screenSize = getScreenSizeWithoutInsets(
+            context
+          )
 
           // snap to edge
-          if (config.main.isSnapToEdgeEnabled
-            && oldScreenSize.width != 0 && oldScreenSize.height != 0
-          ) {
-            val wasOnRightEdge = crrPoint.x + contentSize.width >= oldScreenSize.width
-            val wasOnBottomEdge = crrPoint.y + contentSize.height >= oldScreenSize.height
+          if (oldScreenSize != screenSize) {
+            if (config.main.isSnapToEdgeEnabled
+              && oldScreenSize.width != 0 && oldScreenSize.height != 0
+            ) {
+              val wasOnRightEdge = crrPoint.x + contentSize.width >= oldScreenSize.width
+              val wasOnBottomEdge = crrPoint.y + contentSize.height >= oldScreenSize.height
 
-//          adjust main float position to new screen size
-            if (wasOnRightEdge) {
-              crrPoint = Point(
-                newScreenSize.width - contentSize.width,
-                crrPoint.y.coerceIn(0, coerceInMax(newScreenSize.height - contentSize.height))
-              )
+              // adjust main float position to new screen size
+              if (wasOnRightEdge) {
+                crrPoint = Point(
+                  screenSize.width - contentSize.width,
+                  crrPoint.y.coerceIn(0, coerceInMax(screenSize.height - contentSize.height))
+                )
+              }
+              if (wasOnBottomEdge) {
+                crrPoint = Point(
+                  crrPoint.x.coerceIn(0, coerceInMax(screenSize.width - contentSize.width)),
+                  screenSize.height - contentSize.height
+                )
+              }
+
+              if (config.enableAnimations) {
+                animationState = AnimationState.SNAP_TO_EDGE
+                animPoint = crrPoint
+              } else {
+                windowManager.updateViewLayout(containerView, layoutParams.apply {
+                  x = crrPoint.x
+                  y = crrPoint.y
+                })
+              }
             }
-            if (wasOnBottomEdge) {
-              crrPoint = Point(
-                crrPoint.x.coerceIn(0, coerceInMax(newScreenSize.width - contentSize.width)),
-                newScreenSize.height - contentSize.height
-              )
-            }
 
-            if (config.enableAnimations) {
-              animationState = AnimationState.SNAP_TO_EDGE
-              animPoint = crrPoint
-            } else {
-              windowManager.updateViewLayout(containerView, layoutParams.apply {
-                x = crrPoint.x
-                y = crrPoint.y
-              })
-            }
-          }
-        }
-
-        // update close point when orientation changes and close float is visible to adapt it to
-        // new screenSize and constrainedCrrPoint
-        if (config.close.enabled
-          && isCloseVisible
-          && contentSize != IntSize.Zero
-          && dragAmountState != null
-          && closeContentSize != null
-        ) {
-          LaunchedEffect(key1 = configuration) {
-            val oldScreenSize = screenSize
-            val newScreenSize = getScreenSizeWithoutInsets(context, density, configuration)
-            screenSize = newScreenSize
-
-            if (oldScreenSize.width != newScreenSize.width ||
-              oldScreenSize.height != newScreenSize.height
+            // adapt close position to new screenSize and constrainedCrrPoint
+            if (config.close.enabled
+              && isCloseVisible
+              && contentSize != IntSize.Zero
+              && dragAmountState != null
+              && closeContentSize != null
             ) {
               // adapt initialClosePoint to new screen orientation
               initialClosePoint = getCloseInitialPoint(

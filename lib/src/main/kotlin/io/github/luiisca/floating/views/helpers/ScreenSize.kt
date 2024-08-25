@@ -1,30 +1,50 @@
 package io.github.luiisca.floating.views.helpers
 
 import android.content.Context
-import android.content.res.Configuration
 import android.os.Build
 import android.view.WindowInsets
 import android.view.WindowManager
-import android.view.WindowMetrics
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import android.util.DisplayMetrics
 
-fun getScreenSizeWithoutInsets(context: Context, density: Density, configuration: Configuration): IntSize {
-  val screenWidth = configuration.screenWidthDp.dp
+fun getScreenSizeWithoutInsets(context: Context): IntSize {
+  val windowManager = ContextCompat.getSystemService(context, WindowManager::class.java)
+    ?: return IntSize.Zero
 
-  val screenHeight = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-    val metrics: WindowMetrics = context.getSystemService(WindowManager::class.java).currentWindowMetrics
-    val insets = metrics.windowInsets.getInsetsIgnoringVisibility(
-      WindowInsets.Type.navigationBars() or WindowInsets.Type.statusBars()
-    )
-    with(density) { (metrics.bounds.height() - insets.top - insets.bottom).toDp() }
-  } else {
-    configuration.screenHeightDp.dp
+  return when {
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+      val windowMetrics = windowManager.maximumWindowMetrics
+      val insets = windowMetrics.windowInsets.getInsetsIgnoringVisibility(
+        WindowInsets.Type.systemBars()
+      )
+      IntSize(
+        windowMetrics.bounds.width() - (insets.left + insets.right),
+        windowMetrics.bounds.height() - (insets.top + insets.bottom)
+      )
+    }
+    else -> {
+      // API Level below 23
+      val displayMetrics = DisplayMetrics()
+      windowManager.defaultDisplay.getRealMetrics(displayMetrics)
+
+      val statusBarHeight = getStatusBarHeight(context)
+      val navigationBarHeight = getNavigationBarHeight(context)
+
+      return IntSize(
+        displayMetrics.widthPixels,
+        displayMetrics.heightPixels - statusBarHeight - navigationBarHeight
+      )
+    }
   }
+}
 
-  return IntSize(
-    with(density) { screenWidth.roundToPx() },
-    with(density) { screenHeight.roundToPx() }
-  )
+private fun getStatusBarHeight(context: Context): Int {
+  val resourceId = context.resources.getIdentifier("status_bar_height", "dimen", "android")
+  return if (resourceId > 0) context.resources.getDimensionPixelSize(resourceId) else 0
+}
+
+private fun getNavigationBarHeight(context: Context): Int {
+  val resourceId = context.resources.getIdentifier("navigation_bar_height", "dimen", "android")
+  return if (resourceId > 0) context.resources.getDimensionPixelSize(resourceId) else 0
 }

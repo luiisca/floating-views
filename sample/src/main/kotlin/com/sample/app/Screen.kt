@@ -62,7 +62,7 @@ fun App() {
             // Add other main float configurations here
           ),
           close = CloseFloatConfig(
-            closeBehavior = CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT,
+//            closeBehavior = CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT,
             // Add other close float configurations here
           ),
           expanded = ExpandedFloatConfig(

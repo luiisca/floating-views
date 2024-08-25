@@ -17,7 +17,11 @@ import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -509,13 +513,14 @@ class CreateFloatViews(
     private fun createMainView() {
         val _mainView = ComposeView(context).apply {
             mainView = this
+
             this.setContent {
                 DraggableFloat(
                     windowManager = windowManager,
                     containerView = mainView!!,
                     closeView = closeView!!,
-                    closeLayoutParams = closeLayoutParams,
                     layoutParams = mainLayoutParams,
+                    closeLayoutParams = closeLayoutParams,
                     config = config,
                     onKey = { event ->
                         if (event.key == Key.Back) {
@@ -571,9 +576,7 @@ class CreateFloatViews(
             }
         }
 
-        addToComposeLifecycle(_mainView)
-        windowManager.addView(_mainView, mainLayoutParams)
-        addViewToTrackingList(_mainView)
+        compose(_mainView, mainLayoutParams)
     }
 
     private fun createExpandedView() {
@@ -640,9 +643,7 @@ class CreateFloatViews(
             }
         }
 
-        addToComposeLifecycle(_expandedView)
-        windowManager.addView(_expandedView, expandedLayoutParams)
-        addViewToTrackingList(_expandedView)
+        compose(_expandedView, expandedLayoutParams)
     }
 
     private fun createCloseView() {
@@ -697,9 +698,7 @@ class CreateFloatViews(
             }
         }
 
-        addToComposeLifecycle(_overlayView)
-        windowManager.addView(_overlayView, overlayLayoutParams)
-        addViewToTrackingList(_overlayView)
+        compose(_overlayView, overlayLayoutParams)
     }
 
     private fun openExpanded() {
@@ -729,6 +728,12 @@ class CreateFloatViews(
         }
     }
 
+    private fun compose(composable: ComposeView, layoutParams: WindowManager.LayoutParams) {
+        composable.consumeWindowInsets = false
+        addToComposeLifecycle(composable)
+        windowManager.addView(composable, layoutParams)
+        addViewToTrackingList(composable)
+    }
     private fun addToComposeLifecycle(composable: ComposeView) {
         composeOwner.attachToDecorView(composable)
         if (!getIsComposeOwnerInit()) {
