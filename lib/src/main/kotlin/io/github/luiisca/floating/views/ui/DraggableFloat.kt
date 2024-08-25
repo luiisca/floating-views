@@ -565,6 +565,7 @@ fun DraggableFloat(
               )
             },
             onDragEnd = {
+              onDragEnd?.invoke()
               accDrag = PointF(0f,0f)
 
               if (config.close.enabled) {
@@ -579,6 +580,8 @@ fun DraggableFloat(
 
                 if (withinCloseArea) {
                   onDestroy?.let { it() }
+
+                  return@detectDragGestures
                 }
               }
 
@@ -618,7 +621,6 @@ fun DraggableFloat(
                 constrainedCrrPoint = newPoint
                 crrPoint = newPoint
               }
-              onDragEnd?.invoke()
             }
           )
         }
