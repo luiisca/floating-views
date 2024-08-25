@@ -212,6 +212,7 @@ fun DraggableFloat(
                   y = crrPoint.y
                 })
               }
+              initialPoint = crrPoint
             }
 
             // adapt close position to new screenSize and constrainedCrrPoint
