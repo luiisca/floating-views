@@ -34,65 +34,7 @@ dependencies {
 ```
 >[sample/build.gradle.kts:55](https://github.com/luiisca/floating-views/blob/5c5cc9b03b1aa4cc37c964104c2eac6cb49b0d65/sample/build.gradle.kts#L55)
 
-### 2. Create your floating service
-
-Create a service file and set up the `FloatingViewsController`. This class creates and manages multiple elements necessary for all floating views, you can configure each element's logic and even provide custom animations for some of their interactive behaviors.
-
-```kotlin
-class Service : Service() {
-  private lateinit var floatingViewsController: FloatingViewsController
-
-  override fun onCreate() {
-    super.onCreate()
-
-    floatingViewsController = FloatingViewsController(
-      this,
-      // pass `stopSelf` to stop the service after closing the last dynamic floating view.
-      stopService = { stopSelf() },
-      mainFloatConfig = MainFloatConfig(
-        composable = { FloatView() },
-        // Add other main float configurations here
-      ),
-      closeFloatConfig = CloseFloatConfig(
-        closeBehavior = CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT,
-        // Add other close float configurations here
-      ),
-      expandedFloatConfig = ExpandedFloatConfig(
-        composable = {close -> ExpandedView(close) },
-        // Add other expanded float configurations here
-      )
-    )
-
-    // elevate service to foreground status to make it less likely to be terminated by the system under memory pressure
-    floatingViewsController.initializeAsForegroundService()
-
-    // Optional: React to service running state changes
-    FloatServiceStateManager.setServiceRunning(true)
-  }
-
-  override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-    super.onStartCommand(intent, flags, startId)
-
-    // Creates and starts a new dynamic, interactive floating view.
-    floatingViewsController.startDynamicFloatingView()
-
-    return START_STICKY
-  }
-
-  override fun onDestroy() {
-    super.onDestroy()
-
-    // Removes all views added while the Service was alive
-    floatingViewsController.stopAllDynamicFloatingViews()
-
-    // Optional: React to service running state changes
-    FloatServiceStateManager.setServiceRunning(false)
-  }
-}
-```
->[sample/.../Service.kt:15](https://github.com/luiisca/floating-views/blob/5c5cc9b03b1aa4cc37c964104c2eac6cb49b0d65/sample/src/main/kotlin/com/sample/app/Service.kt#L15)
-
-### 3. Update your AndroidManifest.xml
+### 2. Update your AndroidManifest.xml
 
 Add the following to your `AndroidManifest.xml`:
 
@@ -149,33 +91,111 @@ Add the following to your `AndroidManifest.xml`:
 ```
 >[sample/.../AndroidManifest.xml](https://github.com/luiisca/floating-views/blob/5c5cc9b03b1aa4cc37c964104c2eac6cb49b0d65/sample/src/main/AndroidManifest.xml)
 
-### 4. Launch and manage your floating view
-In your main composable, add buttons to start and stop the floating service:
+### 3. Launch and manage your custom floating view
+
+This library allows you to create a highly customizable floating view with three main components: main float, close float, and expanded float. Here's how to configure and launch your floating view:
+
+1. **Create a custom configuration**: Use `FloatingViewsConfig` to define the behavior of a single floating view and its components.
+```kotlin
+val config = FloatingViewsConfig(
+  enableAnimations = true, // Enable or disable animations
+  main = MainFloatConfig(
+    composable = { YourMainFloatContent() },
+    // Configure main float behavior
+  ),
+  close = CloseFloatConfig(
+    composable = { YourCloseFloatContent() },
+    // Configure close float behavior
+  ),
+  expanded = ExpandedFloatConfig(
+    composable = { close -> YourExpandedFloatContent(close) },
+    // Configure expanded float behavior
+  )
+)
+```
+Each config object (`MainFloatConfig`, `CloseFloatConfig`, `ExpandedFloatConfig`) allows you to customize various aspects of that specific component of your floating view.
+
+2. **Launch the floating view**: Use `FloatingViewsManager.startFloatServiceIfPermitted()` to start the service and display your custom floating view.
+```kotlin
+FloatingViewsManager.startFloatServiceIfPermitted(context, config)
+```
+
+3. **Monitor service state**: Subscribe to `FloatServiceStateManager.isServiceRunning` to be notified when the service starts or stops.
+```kotlin
+@Composable
+fun YourComposable() {
+	val isServiceRunning by FloatServiceStateManager.isServiceRunning.collectAsState()
+
+    // Use isServiceRunning to update your UI
+    if (isServiceRunning) {
+        Text("Service is running")
+    } else {
+        Text("Service is not running")
+    }
+}
+```
+
+Here's an example demonstrating how to create and launch multiple, distinct floating views while monitoring the service state:
 
 ```kotlin
 @Composable
 fun App() {
-  val context = LocalContext.current
-  val isServiceRunning by FloatServiceStateManager.isServiceRunning.collectAsState()
+  Scaffold { innerPadding ->
+    println(innerPadding)
 
-  Column(
-    modifier = Modifier.fillMaxSize(),
-    verticalArrangement = Arrangement.Center,
-    horizontalAlignment = Alignment.CenterHorizontally
-  ) {
-    Button(onClick = {
-      PermissionHelper.startFloatServiceIfPermitted(context, Service::class.java)
-    }) {
-      Text(text = "Add floating view")
-    }
+    val context = LocalContext.current
+    val isServiceRunning by FloatServiceStateManager.isServiceRunning.collectAsState()
 
-    if (isServiceRunning) {
+    Column(
+      modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp),
+      verticalArrangement = Arrangement.Center,
+      horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+      // Base Float
       Button(
+        modifier = Modifier.widthIn(min = 200.dp, max = 300.dp),
         onClick = {
-          context.stopService(Intent(context, Service::class.java))
+          val config = FloatingViewsConfig(
+            enableAnimations = false,
+            main = MainFloatConfig(
+              composable = { BaseFloat() },
+              // Add other main float configurations here
+            ),
+            close = CloseFloatConfig(
+              closeBehavior = CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT,
+              // Add other close float configurations here
+            ),
+            expanded = ExpandedFloatConfig(
+              composable = {close -> BaseExpandedFloat(close) },
+              // Add other expanded float configurations here
+            )
+          )
+
+          // Launch a new music player floating view
+          FloatingViewsManager.startFloatServiceIfPermitted(context, config)
         }
       ) {
-        Text("Stop floating service")
+        Text(text = "Base", style = MaterialTheme.typography.bodyLarge)
+      }
+	 //...
+
+      // Display a button to stop the service if it's running
+      if (isServiceRunning) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+          colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.error,
+            contentColor = MaterialTheme.colorScheme.onError
+          ),
+          modifier = Modifier.widthIn(min = 200.dp, max = 300.dp),
+          onClick = {
+            FloatingViewsManager.stopFloatService(context)
+          }
+        ) {
+          Text(text = "Remove all", style = MaterialTheme.typography.bodyLarge)
+        }
       }
     }
   }
