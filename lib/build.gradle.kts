@@ -1,3 +1,5 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
 plugins {
   alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.android)
@@ -34,6 +36,38 @@ android {
   }
   composeOptions {
     kotlinCompilerExtensionVersion = "1.5.3"
+  }
+}
+
+mavenPublishing {
+  coordinates("io.github.luiisca", "floating.views", "1.0.0")
+  publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+  signAllPublications()
+
+  pom {
+    name.set("Floating Views")
+    description.set("Effortlessly create customizable floating UI elements.")
+    inceptionYear.set("2024")
+    url.set("https://github.com/luiisca/floating-views")
+    licenses {
+      license {
+        name.set("MIT License")
+        url.set("https://mit-license.org/license.txt")
+        distribution.set("https://mit-license.org/license.txt")
+      }
+    }
+    developers {
+      developer {
+        id.set("luiisca")
+        name.set("Luis Cadillo")
+        url.set("https://github.com/luiisca")
+      }
+    }
+    scm {
+      url.set("https://github.com/luiisca/floating-views")
+      connection.set("scm:git:git://github.com/luiisca/floating-views.git")
+      developerConnection.set("scm:git:ssh://git@github.com/luiisca/floating-views.git")
+    }
   }
 }
 

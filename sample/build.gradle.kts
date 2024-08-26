@@ -52,8 +52,7 @@ android {
 }
 
 dependencies {
-    // TODO: use published version
-    implementation(project(":lib"))
+    implementation("io.github.luiisca:floating.views:1.0.0")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
