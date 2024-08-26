@@ -13,6 +13,7 @@ core-ktx = "1.13.1"
 navigation-compose = "2.7.7"
 saved-state = "1.2.1"
 maven-publish = "0.29.0"
+floating-views = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
@@ -35,6 +36,7 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-saved-state = { group = "androidx.savedstate", name = "savedstate", version.ref = "saved-state" }
+io-github-luiisca-floating-views = { group = "io.github.luiisca", name = "floating-views", version.ref = "floating-views" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
