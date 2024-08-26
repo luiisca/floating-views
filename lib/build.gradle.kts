@@ -20,7 +20,7 @@ android {
 
   buildTypes {
     release {
-      isMinifyEnabled = true
+      isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
   }
@@ -40,7 +40,7 @@ android {
 }
 
 mavenPublishing {
-  coordinates("io.github.luiisca", "floating.views", "1.0.0")
+  coordinates("io.github.luiisca", "floating.views", libs.versions.floating.views.get())
   publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
   signAllPublications()
 
