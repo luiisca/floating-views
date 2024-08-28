@@ -17,6 +17,9 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.systemGestureExclusion
@@ -38,6 +41,7 @@ import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -113,14 +117,19 @@ fun DraggableFloat(
   }
 
   Box(
-    propagateMinConstraints = true,
     modifier = modifier
       .zIndex(10f)
       .onSizeChanged { size ->
         contentSize = size
+        updateSize(size)
       }
-      .wrapContentWidth(Alignment.Start, unbounded = true)
-      .wrapContentHeight(Alignment.Top, unbounded = true)
+      .layout { measurable, constraints ->
+        val newConstraints = constraints.copy(maxWidth = Int.MAX_VALUE, maxHeight = Int.MAX_VALUE) // Remove the 880px cap
+        val placeable = measurable.measure(newConstraints)
+        layout(placeable.width, placeable.height) {
+          placeable.placeRelative(0, 0)
+        }
+      }
       .systemGestureExclusion()
       .onKeyEvent { event ->
         onKey(event)

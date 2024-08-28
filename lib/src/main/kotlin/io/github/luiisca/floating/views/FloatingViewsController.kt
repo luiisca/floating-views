@@ -17,11 +17,8 @@ import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,11 +28,11 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ServiceCompat
 import io.github.luiisca.floating.views.helpers.FloatingViewsManager
-import io.github.luiisca.floating.views.ui.AdaptiveSizeWrapper
 import io.github.luiisca.floating.views.ui.CloseFloat
 import io.github.luiisca.floating.views.ui.DraggableFloat
 import io.github.luiisca.floating.views.ui.FullscreenOverlayFloat
@@ -548,17 +545,6 @@ class CreateFloatViews(
                     onDrag = config.main.onDrag,
                     onDragEnd = config.main.onDragEnd,
                 ) {
-                    AdaptiveSizeWrapper(updateLayoutParams = { contentSize, screenSize ->
-                        mainLayoutParams = if (contentSize.width >= screenSize.width) {
-                            mainLayoutParams.apply {
-                                width = screenSize.width
-                            }
-                        } else {
-                            mainLayoutParams.apply {
-                                width = contentSize.width
-                            }
-                        }
-                    }) {
                         when {
                             config.main.viewFactory != null -> config.main.viewFactory.let { viewFactory ->
                                 AndroidView(
@@ -571,11 +557,11 @@ class CreateFloatViews(
                             config.main.composable != null -> config.main.composable.invoke()
                             else -> throw IllegalArgumentException("Either compose or view must be provided for MainFloat")
                         }
-                    }
                 }
             }
         }
 
+        _mainView.visibility = View.INVISIBLE
         compose(_mainView, mainLayoutParams)
     }
 
@@ -613,17 +599,6 @@ class CreateFloatViews(
                     onDrag = config.expanded.onDrag,
                     onDragEnd = config.expanded.onDragEnd,
                 ) {
-                    AdaptiveSizeWrapper(updateLayoutParams = { contentSize, screenSize ->
-                        expandedLayoutParams = if (contentSize.width >= screenSize.width) {
-                            expandedLayoutParams.apply {
-                                width = screenSize.width
-                            }
-                        } else {
-                            expandedLayoutParams.apply {
-                                width = contentSize.width
-                            }
-                        }
-                    }) {
                         when {
                             config.expanded.viewFactory != null -> config.expanded.viewFactory.let { viewFactory ->
                                 AndroidView(
@@ -638,11 +613,11 @@ class CreateFloatViews(
 
                             else -> throw IllegalArgumentException("Either compose or view must be provided for MainFloat")
                         }
-                    }
                 }
             }
         }
 
+        _expandedView.visibility = View.INVISIBLE
         compose(_expandedView, expandedLayoutParams)
     }
 
@@ -650,22 +625,12 @@ class CreateFloatViews(
         val _closeView = ComposeView(context).apply {
             closeView = this
             this.setContent {
-                CloseFloat(
-                    windowManager = windowManager,
-                    containerView = closeView!!,
-                    layoutParams = closeLayoutParams,
-                ) {
-                    AdaptiveSizeWrapper(updateLayoutParams = { contentSize, screenSize ->
-                        closeLayoutParams = if (contentSize.width >= screenSize.width) {
-                            closeLayoutParams.apply {
-                                width = screenSize.width
-                            }
-                        } else {
-                            closeLayoutParams.apply {
-                                width = contentSize.width
-                            }
-                        }
-                    }) {
+                CloseFloat(updateSize = { size ->
+                    windowManager.updateViewLayout(this, layoutParams.apply {
+                        width = size.width
+                        height = size.height
+                    })
+                }) {
                         when {
                             config.close.viewFactory != null -> config.close.viewFactory.let { factory ->
                                 AndroidView(
@@ -678,14 +643,12 @@ class CreateFloatViews(
                             config.close.composable != null -> config.close.composable.invoke()
                             else -> DefaultCloseButton()
                         }
-                    }
                 }
             }
         }
 
-        addToComposeLifecycle(_closeView)
         _closeView.visibility = View.INVISIBLE
-        addViewToTrackingList(_closeView)
+        compose(_closeView, closeLayoutParams)
     }
 
     private fun createOverlayView() {
