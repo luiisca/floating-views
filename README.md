@@ -1,6 +1,7 @@
 # 🎈 Floating Views for Jetpack Compose
 
-A Jetpack Compose library for adding floating views to your Android apps. Because who doesn't want their UI elements floating around like bubbles in a lava lamp?
+A Kotlin library for effortlessly creating customizable floating UI elements in Android apps.
+
 <p align="center">
     <img src="https://github.com/user-attachments/assets/482c11ad-999a-47cd-ba37-a3a3099d67cc" alt="Floating Views Demo" width="300"/>
 </p>
@@ -32,8 +33,7 @@ dependencies {
     implementation("io.github.luiisca.floating.views:1.0.5")
 }
 ```
->[sample/build.gradle.kts:55](https://github.com/luiisca/floating-views/blob/5c5cc9b03b1aa4cc37c964104c2eac6cb49b0d65/sample/build.gradle.kts#L55)
-> 
+>[sample/build.gradle.kts:55](https://github.com/luiisca/floating-views/blob/a2a3cc587f5c8eca2b4c80f9aa78b587fab5dd86/sample/build.gradle.kts#L55)
 
 ### 2. Update your AndroidManifest.xml
 
@@ -90,7 +90,7 @@ Add the following to your `AndroidManifest.xml`:
     </application>
 </manifest>
 ```
->[sample/.../AndroidManifest.xml](https://github.com/luiisca/floating-views/blob/5c5cc9b03b1aa4cc37c964104c2eac6cb49b0d65/sample/src/main/AndroidManifest.xml)
+>[sample/.../AndroidManifest.xml](https://github.com/luiisca/floating-views/blob/a2a3cc587f5c8eca2b4c80f9aa78b587fab5dd86/sample/src/main/AndroidManifest.xml)
 
 ### 3. Launch and manage your custom floating view
 
@@ -180,7 +180,8 @@ fun App() {
       ) {
         Text(text = "Base", style = MaterialTheme.typography.bodyLarge)
       }
-	 //...
+        
+      // ...
 
       // Display a button to stop the service if it's running
       if (isServiceRunning) {
@@ -202,7 +203,7 @@ fun App() {
   }
 }
 ```
->[sample/.../Screen.kt](https://github.com/luiisca/floating-views/blob/5c5cc9b03b1aa4cc37c964104c2eac6cb49b0d65/sample/src/main/kotlin/com/sample/app/Screen.kt#L74)
+>[sample/.../App.kt](https://github.com/luiisca/floating-views/blob/a2a3cc587f5c8eca2b4c80f9aa78b587fab5dd86/sample/src/main/kotlin/com/sample/app/App.kt#L38)
 
 ## Customization
 
