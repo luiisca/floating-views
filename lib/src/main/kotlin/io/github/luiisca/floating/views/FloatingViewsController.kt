@@ -16,6 +16,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.size
@@ -23,6 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.pointer.PointerInputChange
@@ -746,7 +749,13 @@ class CreateFloatViews(
 }
 
 @Composable
-private fun DefaultCloseButton() {
+fun DefaultCloseButton() {
+    val iconColor = if (isSystemInDarkTheme()) {
+        Color.White
+    } else {
+        Color.Black
+    }
+
     Box(
         modifier = Modifier.size(60.dp),
         contentAlignment = Alignment.Center
@@ -754,6 +763,7 @@ private fun DefaultCloseButton() {
         Image(
             painter = painterResource(id = R.drawable.rounded_cancel_24),
             contentDescription = "Close float view",
+            colorFilter = ColorFilter.tint(iconColor),
             modifier = Modifier.size(60.dp)
         )
     }
