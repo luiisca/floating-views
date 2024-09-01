@@ -24,27 +24,12 @@ fun getScreenSizeWithoutInsets(context: Context): IntSize {
       )
     }
     else -> {
-      // API Level below 23
       val displayMetrics = DisplayMetrics()
-      windowManager.defaultDisplay.getRealMetrics(displayMetrics)
-
-      val statusBarHeight = getStatusBarHeight(context)
-      val navigationBarHeight = getNavigationBarHeight(context)
-
-      return IntSize(
+      windowManager.getDefaultDisplay().getMetrics(displayMetrics)
+      IntSize(
         displayMetrics.widthPixels,
-        displayMetrics.heightPixels - statusBarHeight - navigationBarHeight
+        displayMetrics.heightPixels
       )
     }
   }
-}
-
-private fun getStatusBarHeight(context: Context): Int {
-  val resourceId = context.resources.getIdentifier("status_bar_height", "dimen", "android")
-  return if (resourceId > 0) context.resources.getDimensionPixelSize(resourceId) else 0
-}
-
-private fun getNavigationBarHeight(context: Context): Int {
-  val resourceId = context.resources.getIdentifier("navigation_bar_height", "dimen", "android")
-  return if (resourceId > 0) context.resources.getDimensionPixelSize(resourceId) else 0
 }
