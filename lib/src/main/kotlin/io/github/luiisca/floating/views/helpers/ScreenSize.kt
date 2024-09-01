@@ -7,6 +7,7 @@ import android.view.WindowManager
 import androidx.compose.ui.unit.IntSize
 import androidx.core.content.ContextCompat
 import android.util.DisplayMetrics
+import androidx.compose.ui.unit.dp
 
 fun getScreenSizeWithoutInsets(context: Context): IntSize {
   val windowManager = ContextCompat.getSystemService(context, WindowManager::class.java)
@@ -25,11 +26,17 @@ fun getScreenSizeWithoutInsets(context: Context): IntSize {
     }
     else -> {
       val displayMetrics = DisplayMetrics()
-      windowManager.getDefaultDisplay().getMetrics(displayMetrics)
+      windowManager.defaultDisplay.getMetrics(displayMetrics)
+      val statusBarHeight = getStatusBarHeight(context)
       IntSize(
         displayMetrics.widthPixels,
-        displayMetrics.heightPixels
+        displayMetrics.heightPixels - statusBarHeight
       )
     }
   }
+}
+
+private fun getStatusBarHeight(context: Context): Int {
+  val resourceId = context.resources.getIdentifier("status_bar_height", "dimen", "android")
+  return if (resourceId > 0) context.resources.getDimensionPixelSize(resourceId) else 0
 }
