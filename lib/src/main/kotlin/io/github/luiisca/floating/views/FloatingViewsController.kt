@@ -477,14 +477,14 @@ class CreateFloatViews(
         (config.expanded.startPointDp?.y?.toPx() ?: config.expanded.startPointPx?.y ?: 0f).toInt()
     )
     private var mainLayoutParams = baseLayoutParams().apply {
-        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+        flags = WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
         x = mainStartPoint.x
         y = mainStartPoint.y
     }
     private var expandedLayoutParams = baseLayoutParams().apply {
-        flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+        flags = WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_DIM_BEHIND
         dimAmount = config.expanded.dimAmount
         x = expandedStartPoint.x
@@ -500,11 +500,11 @@ class CreateFloatViews(
     }
 
     init {
-        createMainView()
-
         if (config.close.enabled) {
             createCloseView()
         }
+
+        createMainView()
     }
 
     private fun createMainView() {
@@ -568,6 +568,10 @@ class CreateFloatViews(
 
         _mainView.visibility = View.INVISIBLE
         compose(_mainView, mainLayoutParams)
+        if (closeView != null) {
+            tryRemoveView(closeView!!)
+            compose(closeView!!, closeLayoutParams)
+        }
     }
 
     private fun createExpandedView() {
@@ -629,6 +633,10 @@ class CreateFloatViews(
 
         _expandedView.visibility = View.INVISIBLE
         compose(_expandedView, expandedLayoutParams)
+        if (closeView != null) {
+            tryRemoveView(closeView!!)
+            compose(closeView!!, closeLayoutParams)
+        }
     }
 
     private fun createCloseView() {
@@ -658,7 +666,6 @@ class CreateFloatViews(
         }
 
         _closeView.visibility = View.INVISIBLE
-        compose(_closeView, closeLayoutParams)
     }
 
     private fun createOverlayView() {
@@ -686,7 +693,6 @@ class CreateFloatViews(
     private fun tryCloseDraggable(destroy: Boolean = false) {
         tryRemoveView(mainView)
         tryRemoveView(expandedView)
-        tryRemoveView(closeView)
         tryRemoveView(overlayView)
 
         if (!destroy) {
