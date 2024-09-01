@@ -399,6 +399,7 @@ fun DraggableFloat(
                     // set close visible value immediately instead of waiting for animated value,
                     // since here close float does not move.
                     if (config.close.closeBehavior == CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT) {
+                      closeView.visibility = View.VISIBLE
                       isCloseVisible = true
                     }
                   } else {
