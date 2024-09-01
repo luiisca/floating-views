@@ -36,7 +36,6 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-saved-state = { group = "androidx.savedstate", name = "savedstate", version.ref = "saved-state" }
-io-github-luiisca-floating-views = { group = "io.github.luiisca", name = "floating-views", version.ref = "floating-views" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

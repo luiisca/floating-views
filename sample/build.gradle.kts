@@ -52,8 +52,7 @@ android {
 }
 
 dependencies {
-//    implementation(libs.io.github.luiisca.floating.views)
-    implementation(project(":lib"))
+    implementation("io.github.luiisca.floating.views:1.0.5")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
