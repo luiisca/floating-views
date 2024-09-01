@@ -24,8 +24,8 @@ import com.sample.app.ui.base.BaseFloat
 import com.sample.app.ui.player.PlayerCloseFloat
 import com.sample.app.ui.player.PlayerExpandedFloat
 import com.sample.app.ui.player.PlayerFloat
-import com.sample.app.ui.player.StopwatchCloseFloat
-import com.sample.app.ui.player.StopwatchFloat
+import com.sample.app.ui.stopwatch.StopwatchCloseFloat
+import com.sample.app.ui.stopwatch.StopwatchFloat
 import io.github.luiisca.floating.views.CloseBehavior
 import io.github.luiisca.floating.views.CloseFloatConfig
 import io.github.luiisca.floating.views.ExpandedFloatConfig

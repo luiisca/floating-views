@@ -525,8 +525,6 @@ class CreateFloatViews(
                     updateSize = {size ->
                         updateSize(this, mainLayoutParams, size)
                     },
-                    crrZOrder = getFloatsCount(),
-                    getFloatsCount = {getFloatsCount()},
                     onKey = { event ->
                         if (event.key == Key.Back) {
                             tryCloseDraggable()
@@ -591,8 +589,6 @@ class CreateFloatViews(
                     updateSize = {size ->
                         updateSize(this, expandedLayoutParams, size)
                     },
-                    crrZOrder = getFloatsCount(),
-                    getFloatsCount = {getFloatsCount()},
                     onKey = { event ->
                         if (event.key == Key.Back) {
                             tryCloseDraggable()

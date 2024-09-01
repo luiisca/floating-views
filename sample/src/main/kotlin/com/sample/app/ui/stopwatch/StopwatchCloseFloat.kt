@@ -1,4 +1,4 @@
-package com.sample.app.ui.player
+package com.sample.app.ui.stopwatch
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
