@@ -477,14 +477,14 @@ class CreateFloatViews(
         (config.expanded.startPointDp?.y?.toPx() ?: config.expanded.startPointPx?.y ?: 0f).toInt()
     )
     private var mainLayoutParams = baseLayoutParams().apply {
-        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+        flags = WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
         x = mainStartPoint.x
         y = mainStartPoint.y
     }
     private var expandedLayoutParams = baseLayoutParams().apply {
-        flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+        flags = WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_DIM_BEHIND
         dimAmount = config.expanded.dimAmount
         x = expandedStartPoint.x
@@ -522,8 +522,6 @@ class CreateFloatViews(
                     updateSize = {size ->
                         updateSize(this, mainLayoutParams, size)
                     },
-                    crrZOrder = getFloatsCount(),
-                    getFloatsCount = {getFloatsCount()},
                     onKey = { event ->
                         if (event.key == Key.Back) {
                             tryCloseDraggable()
@@ -584,8 +582,6 @@ class CreateFloatViews(
                     updateSize = {size ->
                         updateSize(this, expandedLayoutParams, size)
                     },
-                    crrZOrder = getFloatsCount(),
-                    getFloatsCount = {getFloatsCount()},
                     onKey = { event ->
                         if (event.key == Key.Back) {
                             tryCloseDraggable()

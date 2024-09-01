@@ -25,7 +25,7 @@ fun getScreenSizeWithoutInsets(context: Context): IntSize {
     }
     else -> {
       val displayMetrics = DisplayMetrics()
-      windowManager.getDefaultDisplay().getMetrics(displayMetrics)
+      windowManager.defaultDisplay.getMetrics(displayMetrics)
       IntSize(
         displayMetrics.widthPixels,
         displayMetrics.heightPixels

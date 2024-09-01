@@ -3,15 +3,10 @@ package io.github.luiisca.floating.views.ui
 import android.graphics.PointF
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onSizeChanged
-import android.view.WindowManager
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
 import kotlin.math.pow
 import kotlin.math.sqrt

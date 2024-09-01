@@ -3,7 +3,6 @@ package io.github.luiisca.floating.views.ui
 import android.content.res.Configuration
 import android.graphics.Point
 import android.graphics.PointF
-import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -17,11 +16,6 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,7 +24,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -80,8 +73,6 @@ fun DraggableFloat(
   closeLayoutParams: WindowManager.LayoutParams,
   config: FloatingViewsConfig,
   updateSize: (size: IntSize) -> Unit,
-  crrZOrder: Int,
-  getFloatsCount: () -> Int,
   onKey: (event: KeyEvent) -> Boolean,
   onDestroy: (() -> Unit)? = null,
   onTap: ((Offset) -> Unit)? = null,
