@@ -2,12 +2,11 @@ package io.github.luiisca.floating.views.helpers
 
 import android.content.Context
 import android.os.Build
+import android.util.DisplayMetrics
 import android.view.WindowInsets
 import android.view.WindowManager
 import androidx.compose.ui.unit.IntSize
 import androidx.core.content.ContextCompat
-import android.util.DisplayMetrics
-import androidx.compose.ui.unit.dp
 
 fun getScreenSizeWithoutInsets(context: Context): IntSize {
   val windowManager = ContextCompat.getSystemService(context, WindowManager::class.java)
