@@ -16,6 +16,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.size
@@ -23,6 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.pointer.PointerInputChange
@@ -500,11 +503,11 @@ class CreateFloatViews(
     }
 
     init {
-        createMainView()
-
         if (config.close.enabled) {
             createCloseView()
         }
+
+        createMainView()
     }
 
     private fun createMainView() {
@@ -566,6 +569,10 @@ class CreateFloatViews(
 
         _mainView.visibility = View.INVISIBLE
         compose(_mainView, mainLayoutParams)
+        if (closeView != null) {
+            tryRemoveView(closeView!!)
+            compose(closeView!!, closeLayoutParams)
+        }
     }
 
     private fun createExpandedView() {
@@ -625,6 +632,10 @@ class CreateFloatViews(
 
         _expandedView.visibility = View.INVISIBLE
         compose(_expandedView, expandedLayoutParams)
+        if (closeView != null) {
+            tryRemoveView(closeView!!)
+            compose(closeView!!, closeLayoutParams)
+        }
     }
 
     private fun createCloseView() {
@@ -654,7 +665,6 @@ class CreateFloatViews(
         }
 
         _closeView.visibility = View.INVISIBLE
-        compose(_closeView, closeLayoutParams)
     }
 
     private fun createOverlayView() {
@@ -682,7 +692,6 @@ class CreateFloatViews(
     private fun tryCloseDraggable(destroy: Boolean = false) {
         tryRemoveView(mainView)
         tryRemoveView(expandedView)
-        tryRemoveView(closeView)
         tryRemoveView(overlayView)
 
         if (!destroy) {
@@ -742,7 +751,13 @@ class CreateFloatViews(
 }
 
 @Composable
-private fun DefaultCloseButton() {
+fun DefaultCloseButton() {
+    val iconColor = if (isSystemInDarkTheme()) {
+        Color.White
+    } else {
+        Color.Black
+    }
+
     Box(
         modifier = Modifier.size(60.dp),
         contentAlignment = Alignment.Center
@@ -750,6 +765,7 @@ private fun DefaultCloseButton() {
         Image(
             painter = painterResource(id = R.drawable.rounded_cancel_24),
             contentDescription = "Close float view",
+            colorFilter = ColorFilter.tint(iconColor),
             modifier = Modifier.size(60.dp)
         )
     }

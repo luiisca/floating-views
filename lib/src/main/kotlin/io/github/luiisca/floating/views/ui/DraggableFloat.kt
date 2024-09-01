@@ -113,16 +113,16 @@ fun DraggableFloat(
   Box(
     modifier = modifier
       .zIndex(10f)
-      .onSizeChanged { size ->
-        contentSize = size
-        updateSize(size)
-      }
       .layout { measurable, constraints ->
         val newConstraints = constraints.copy(maxWidth = Int.MAX_VALUE, maxHeight = Int.MAX_VALUE) // Remove the 880px cap
         val placeable = measurable.measure(newConstraints)
         layout(placeable.width, placeable.height) {
           placeable.placeRelative(0, 0)
         }
+      }
+      .onSizeChanged { size ->
+        contentSize = size
+        updateSize(size)
       }
       .systemGestureExclusion()
       .onKeyEvent { event ->
@@ -390,6 +390,7 @@ fun DraggableFloat(
                     // set close visible value immediately instead of waiting for animated value,
                     // since here close float does not move.
                     if (config.close.closeBehavior == CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT) {
+                      closeView.visibility = View.VISIBLE
                       isCloseVisible = true
                     }
                   } else {
