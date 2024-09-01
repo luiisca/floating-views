@@ -2,7 +2,7 @@
 
 A Jetpack Compose library for adding floating views to your Android apps. Because who doesn't want their UI elements floating around like bubbles in a lava lamp?
 <p align="center">
-  <img src="demo.gif" alt="Floating Views Demo" width="300"/>
+    <img src="https://github.com/user-attachments/assets/482c11ad-999a-47cd-ba37-a3a3099d67cc" alt="Floating Views Demo" width="300"/>
 </p>
 
 ## Features
@@ -33,6 +33,7 @@ dependencies {
 }
 ```
 >[sample/build.gradle.kts:55](https://github.com/luiisca/floating-views/blob/5c5cc9b03b1aa4cc37c964104c2eac6cb49b0d65/sample/build.gradle.kts#L55)
+> 
 
 ### 2. Update your AndroidManifest.xml
 
@@ -95,7 +96,7 @@ Add the following to your `AndroidManifest.xml`:
 
 This library allows you to create a highly customizable floating view with three main components: main float, close float, and expanded float. Here's how to configure and launch your floating view:
 
-1. **Create a custom configuration**: Use `FloatingViewsConfig` to define the behavior of a single floating view and its components.
+3.1. **Create a custom configuration**: Use `FloatingViewsConfig` to define the behavior of a single floating view and its components.
 ```kotlin
 val config = FloatingViewsConfig(
   enableAnimations = true, // Enable or disable animations
@@ -115,12 +116,12 @@ val config = FloatingViewsConfig(
 ```
 Each config object (`MainFloatConfig`, `CloseFloatConfig`, `ExpandedFloatConfig`) allows you to customize various aspects of that specific component of your floating view.
 
-2. **Launch the floating view**: Use `FloatingViewsManager.startFloatServiceIfPermitted()` to start the service and display your custom floating view.
+3.2. **Launch the floating view**: Use `FloatingViewsManager.startFloatServiceIfPermitted()` to start the service and display your custom floating view.
 ```kotlin
 FloatingViewsManager.startFloatServiceIfPermitted(context, config)
 ```
 
-3. **Monitor service state**: Subscribe to `FloatServiceStateManager.isServiceRunning` to be notified when the service starts or stops.
+3.3 **Monitor service state**: Subscribe to `FloatServiceStateManager.isServiceRunning` to be notified when the service starts or stops.
 ```kotlin
 @Composable
 fun YourComposable() {
