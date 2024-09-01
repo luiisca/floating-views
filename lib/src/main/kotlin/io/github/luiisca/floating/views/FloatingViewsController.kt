@@ -519,6 +519,11 @@ class CreateFloatViews(
                     layoutParams = mainLayoutParams,
                     closeLayoutParams = closeLayoutParams,
                     config = config,
+                    updateSize = {size ->
+                        updateSize(this, mainLayoutParams, size)
+                    },
+                    crrZOrder = getFloatsCount(),
+                    getFloatsCount = {getFloatsCount()},
                     onKey = { event ->
                         if (event.key == Key.Back) {
                             tryCloseDraggable()
@@ -576,6 +581,11 @@ class CreateFloatViews(
                     closeLayoutParams = closeLayoutParams,
                     layoutParams = expandedLayoutParams,
                     config = config,
+                    updateSize = {size ->
+                        updateSize(this, expandedLayoutParams, size)
+                    },
+                    crrZOrder = getFloatsCount(),
+                    getFloatsCount = {getFloatsCount()},
                     onKey = { event ->
                         if (event.key == Key.Back) {
                             tryCloseDraggable()
@@ -676,6 +686,7 @@ class CreateFloatViews(
     private fun tryCloseDraggable(destroy: Boolean = false) {
         tryRemoveView(mainView)
         tryRemoveView(expandedView)
+        tryRemoveView(closeView)
         tryRemoveView(overlayView)
 
         if (!destroy) {
@@ -691,12 +702,21 @@ class CreateFloatViews(
         }
     }
 
-    private fun compose(composable: ComposeView, layoutParams: WindowManager.LayoutParams) {
-        composable.consumeWindowInsets = false
-        addToComposeLifecycle(composable)
-        windowManager.addView(composable, layoutParams)
-        addViewToTrackingList(composable)
+    private fun updateSize(composeView: ComposeView, layoutParams: WindowManager.LayoutParams, size: IntSize) {
+        windowManager.updateViewLayout(composeView, layoutParams.apply {
+            width = size.width
+            height = size.height
+        })
+        composeView.visibility = View.VISIBLE
     }
+
+    private fun compose(composeView: ComposeView, layoutParams: WindowManager.LayoutParams) {
+        composeView.consumeWindowInsets = false
+        addToComposeLifecycle(composeView)
+        windowManager.addView(composeView, layoutParams)
+        addViewToTrackingList(composeView)
+    }
+
     private fun addToComposeLifecycle(composable: ComposeView) {
         composeOwner.attachToDecorView(composable)
         if (!getIsComposeOwnerInit()) {

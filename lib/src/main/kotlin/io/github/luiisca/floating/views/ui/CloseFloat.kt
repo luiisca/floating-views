@@ -10,24 +10,29 @@ import android.view.WindowManager
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.IntSize
 import kotlin.math.pow
 import kotlin.math.sqrt
 
 @Composable
 fun CloseFloat(
-  windowManager: WindowManager,
-  containerView: ComposeView,
-  layoutParams: WindowManager.LayoutParams,
   modifier: Modifier = Modifier,
+  updateSize: (newSize: IntSize) -> Unit,
   content: @Composable BoxScope.() -> Unit
 ) {
   Box(
     modifier = modifier
-      .wrapContentWidth(Alignment.Start, unbounded = true)
-      .wrapContentHeight(Alignment.Top, unbounded = true)
-      .onSizeChanged {
-        windowManager.updateViewLayout(containerView, layoutParams)
+      .layout { measurable, constraints ->
+        val newConstraints = constraints.copy(maxWidth = Int.MAX_VALUE, maxHeight = Int.MAX_VALUE) // Remove the 880px cap
+        val placeable = measurable.measure(newConstraints)
+        layout(placeable.width, placeable.height) {
+          placeable.placeRelative(0, 0)
+        }
+      }
+      .onSizeChanged { size ->
+        updateSize(size)
       }
   ) {
     content()
