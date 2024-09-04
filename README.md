@@ -146,8 +146,8 @@ fun YourComposable() {
     }
 }
 ```
-
-Here's an example demonstrating how to create and launch multiple, distinct floating views while monitoring the service state:
+<details>
+	<summary>Here's an example demonstrating how to create and launch multiple, distinct floating views while monitoring the service state:</summary>
 
 ```kotlin
 @Composable
@@ -216,6 +216,8 @@ fun App() {
 ```
 
 > [sample/.../App.kt](https://github.com/luiisca/floating-views/blob/a2a3cc587f5c8eca2b4c80f9aa78b587fab5dd86/sample/src/main/kotlin/com/sample/app/App.kt#L38)
+
+</details>
 
 ## Customization
 
