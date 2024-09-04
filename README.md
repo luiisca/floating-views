@@ -1,4 +1,4 @@
-# 🎈 Floating Views for Jetpack Compose
+# 🎈 Kotlin Library for Customizable Floating UI Elements
 
 A Kotlin library for effortlessly creating customizable floating UI elements in Android apps.
 
@@ -33,7 +33,8 @@ dependencies {
     implementation("io.github.luiisca.floating.views:1.0.5")
 }
 ```
->[sample/build.gradle.kts:55](https://github.com/luiisca/floating-views/blob/a2a3cc587f5c8eca2b4c80f9aa78b587fab5dd86/sample/build.gradle.kts#L55)
+
+> [sample/build.gradle.kts:55](https://github.com/luiisca/floating-views/blob/a2a3cc587f5c8eca2b4c80f9aa78b587fab5dd86/sample/build.gradle.kts#L55)
 
 ### 2. Update your AndroidManifest.xml
 
@@ -90,13 +91,15 @@ Add the following to your `AndroidManifest.xml`:
     </application>
 </manifest>
 ```
->[sample/.../AndroidManifest.xml](https://github.com/luiisca/floating-views/blob/a2a3cc587f5c8eca2b4c80f9aa78b587fab5dd86/sample/src/main/AndroidManifest.xml)
+
+> [sample/.../AndroidManifest.xml](https://github.com/luiisca/floating-views/blob/a2a3cc587f5c8eca2b4c80f9aa78b587fab5dd86/sample/src/main/AndroidManifest.xml)
 
 ### 3. Launch and manage your custom floating view
 
 This library allows you to create a highly customizable floating view with three main components: main float, close float, and expanded float. Here's how to configure and launch your floating view:
 
 3.1. **Create a custom configuration**: Use `FloatingViewsConfig` to define the behavior of a single floating view and its components.
+
 ```kotlin
 val config = FloatingViewsConfig(
   enableAnimations = true, // Enable or disable animations
@@ -114,14 +117,17 @@ val config = FloatingViewsConfig(
   )
 )
 ```
+
 Each config object (`MainFloatConfig`, `CloseFloatConfig`, `ExpandedFloatConfig`) allows you to customize various aspects of that specific component of your floating view.
 
 3.2. **Launch the floating view**: Use `FloatingViewsManager.startFloatServiceIfPermitted()` to start the service and display your custom floating view.
+
 ```kotlin
 FloatingViewsManager.startFloatServiceIfPermitted(context, config)
 ```
 
 3.3 **Monitor service state**: Subscribe to `FloatServiceStateManager.isServiceRunning` to be notified when the service starts or stops.
+
 ```kotlin
 @Composable
 fun YourComposable() {
@@ -180,7 +186,7 @@ fun App() {
       ) {
         Text(text = "Base", style = MaterialTheme.typography.bodyLarge)
       }
-        
+
       // ...
 
       // Display a button to stop the service if it's running
@@ -203,7 +209,8 @@ fun App() {
   }
 }
 ```
->[sample/.../App.kt](https://github.com/luiisca/floating-views/blob/a2a3cc587f5c8eca2b4c80f9aa78b587fab5dd86/sample/src/main/kotlin/com/sample/app/App.kt#L38)
+
+> [sample/.../App.kt](https://github.com/luiisca/floating-views/blob/a2a3cc587f5c8eca2b4c80f9aa78b587fab5dd86/sample/src/main/kotlin/com/sample/app/App.kt#L38)
 
 ## Customization
 
@@ -212,6 +219,7 @@ The `FloatingViewsController` offers extensive customization options. Here's an 
 ### Key Customization Examples
 
 1. Main Floating View:
+
 ```kotlin
 val mainFloatConfig = MainFloatConfig(
     composable = { /* Your content */ },
@@ -220,7 +228,9 @@ val mainFloatConfig = MainFloatConfig(
     onTap = { /* Handle tap */ }
 )
 ```
+
 2. Expanded View:
+
 ```kotlin
 val expandedFloatConfig = ExpandedFloatConfig(
     enabled = true,
@@ -229,7 +239,9 @@ val expandedFloatConfig = ExpandedFloatConfig(
     composable = { close -> /* Expanded content */ }
 )
 ```
+
 3. Close View:
+
 ```kotlin
 val closeFloatConfig = CloseFloatConfig(
     enabled = true,
@@ -244,54 +256,55 @@ Below is a comprehensive list of all configuration options:
 
 #### MainFloatConfig
 
-| Option                      | Description                                                                                                                                                                                      | Type                                                                                            | Default                                                                                      |
-|-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|
-| `composable`                | The Composable to be rendered inside the floating view. If null, `viewFactory` is used.                                                                                                          | `(@Composable () -> Unit)?`                                                                     | `null`                                                                                       |
-| `viewFactory`               | Factory function to create a traditional Android view inside the floating view. If null, `composable` is used.                                                                                   | `((Context) -> View)?`                                                                          | `null`                                                                                       |
-| `startPointDp`              | Initial position of the floating view in density-independent pixels (dp). When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used.                                     | `PointF?`                                                                                       | `null`                                                                                       |
-| `startPointPx`              | Initial position of the floating view in pixels (px). When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used.                                                         | `PointF?`                                                                                       | `null`                                                                                       |
-| `draggingTransitionSpec`    | Animation spec for dragging transitions. Applied when `FloatingViewsController.enableAnimations` is `true`.                                                                                      | `(Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)`                                    | `spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessHigh)`       |
-| `snapToEdgeTransitionSpec`  | Animation spec for snapping to the screen edge. Applied when `FloatingViewsController.enableAnimations` is `true` and `isSnapToEdgeEnabled` is `true`.                                           | `(Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)`                                    | `spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)` |
-| `snapToCloseTransitionSpec` | Animation spec for snapping to close float. Applied when `FloatingViewsController.enableAnimations` is `true` and `CloseFloatConfig.closeBehavior` is `CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT`. | `(Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)`                                    | `spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)`    |
-| `isSnapToEdgeEnabled`       | If `true`, the floating view will snap to the nearest screen edge when dragging ends.                                                                                                            | `Boolean`                                                                                       | `true`                                                                                       |
-| `onTap`                     | Callback triggered when the floating view is tapped.                                                                                                                                             | `((Offset) -> Unit)?`                                                                           | `null`                                                                                       |
-| `onDragStart`               | Callback triggered when dragging of the floating view begins.                                                                                                                                    | `((offset: Offset) -> Unit)?`                                                                   | `null`                                                                                       |
+| Option                      | Description                                                                                                                                                                                      | Type                                                                                             | Default                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `composable`                | The Composable to be rendered inside the floating view. If null, `viewFactory` is used.                                                                                                          | `(@Composable () -> Unit)?`                                                                      | `null`                                                                                       |
+| `viewFactory`               | Factory function to create a traditional Android view inside the floating view. If null, `composable` is used.                                                                                   | `((Context) -> View)?`                                                                           | `null`                                                                                       |
+| `startPointDp`              | Initial position of the floating view in density-independent pixels (dp). When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used.                                     | `PointF?`                                                                                        | `null`                                                                                       |
+| `startPointPx`              | Initial position of the floating view in pixels (px). When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used.                                                         | `PointF?`                                                                                        | `null`                                                                                       |
+| `draggingTransitionSpec`    | Animation spec for dragging transitions. Applied when `FloatingViewsController.enableAnimations` is `true`.                                                                                      | `(Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)`                                     | `spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessHigh)`       |
+| `snapToEdgeTransitionSpec`  | Animation spec for snapping to the screen edge. Applied when `FloatingViewsController.enableAnimations` is `true` and `isSnapToEdgeEnabled` is `true`.                                           | `(Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)`                                     | `spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)` |
+| `snapToCloseTransitionSpec` | Animation spec for snapping to close float. Applied when `FloatingViewsController.enableAnimations` is `true` and `CloseFloatConfig.closeBehavior` is `CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT`. | `(Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)`                                     | `spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)`    |
+| `isSnapToEdgeEnabled`       | If `true`, the floating view will snap to the nearest screen edge when dragging ends.                                                                                                            | `Boolean`                                                                                        | `true`                                                                                       |
+| `onTap`                     | Callback triggered when the floating view is tapped.                                                                                                                                             | `((Offset) -> Unit)?`                                                                            | `null`                                                                                       |
+| `onDragStart`               | Callback triggered when dragging of the floating view begins.                                                                                                                                    | `((offset: Offset) -> Unit)?`                                                                    | `null`                                                                                       |
 | `onDrag`                    | Callback triggered during dragging of the floating view.                                                                                                                                         | `((PointerInputChange, dragAmount: Offset, newPoint: Point, newAnimatedPoint: Point?) -> Unit)?` | `null`                                                                                       |
-| `onDragEnd`                 | Callback triggered when dragging of the floating view ends.                                                                                                                                      | `(() -> Unit)?`                                                                                 | `null`                                                                                       |
+| `onDragEnd`                 | Callback triggered when dragging of the floating view ends.                                                                                                                                      | `(() -> Unit)?`                                                                                  | `null`                                                                                       |
 
 #### ExpandedFloatConfig
 
-| Option                              | Description                                                                                                                                        | Type                                               | Default |
-| ----------------------------------- |----------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------| ------- |
-| `enabled`                           | If `true`, enables expanded view mode.                                                                                                             | `Boolean`                                          | `true`  |
-| `tapOutsideToClose`                 | If `true` adds an overlay view that will close expanded view when tapped.                                                                          | `Boolean`                                          | `true`  |
-| `dimAmount`                         | Controls the dimming amount of the background when the view is expanded. Range is from 1.0 for completely opaque to 0.0 for no dim.                | `Float`                                            | `0.5f`  |
-| `composable`                        | The Composable to be rendered inside the expanded view. If null, `viewFactory` is used. Call close to remove expanded view.                        | `(@Composable (close: () -> Unit) -> Unit)?`       | `null`  |
-| `viewFactory`                       | Factory function to create a traditional Android view inside the expanded view. If null, `composable` is used. Call close to remove expanded view. | `((context: Context, close:() -> Unit) -> View)?`  | `null`  |
-| All properties from MainFloatConfig | All properties from `MainFloatConfig` are also available here.                                                                                     |                                                    |         |
+| Option                              | Description                                                                                                                                        | Type                                              | Default |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ------- |
+| `enabled`                           | If `true`, enables expanded view mode.                                                                                                             | `Boolean`                                         | `true`  |
+| `tapOutsideToClose`                 | If `true` adds an overlay view that will close expanded view when tapped.                                                                          | `Boolean`                                         | `true`  |
+| `dimAmount`                         | Controls the dimming amount of the background when the view is expanded. Range is from 1.0 for completely opaque to 0.0 for no dim.                | `Float`                                           | `0.5f`  |
+| `composable`                        | The Composable to be rendered inside the expanded view. If null, `viewFactory` is used. Call close to remove expanded view.                        | `(@Composable (close: () -> Unit) -> Unit)?`      | `null`  |
+| `viewFactory`                       | Factory function to create a traditional Android view inside the expanded view. If null, `composable` is used. Call close to remove expanded view. | `((context: Context, close:() -> Unit) -> View)?` | `null`  |
+| All properties from MainFloatConfig | All properties from `MainFloatConfig` are also available here.                                                                                     |                                                   |         |
 
 #### CloseFloatConfig
 
-| Option                     | Description                                                                                                                                                                                                                                | Type                                                         | Default                                                                                |
-| -------------------------- |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| `enabled`                  | If `true`, enables the close float behavior.                                                                                                                                                                                               | `Boolean`                                                    | `true`                                                                                 |
-| `composable`               | The Composable to be rendered inside the close floating view. If null, `viewFactory` is used.                                                                                                                                              | `(@Composable () -> Unit)?`                                  | `null`                                                                                 |
-| `viewFactory`              | Factory function to create a traditional Android view inside the close floating view. If null, `composable` is used.                                                                                                                       | `((Context) -> View)?`                                       | `null`                                                                                 |
-| `startPointDp`             | Initial position of the close floating view in density-independent pixels (dp). When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used.                                                                         | `PointF?`                                                    | `null`                                                                                 |
-| `startPointPx`             | Initial position of the close float in pixels (px). When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used.                                                                                                     | `PointF?`                                                    | `null`                                                                                 |
-| `mountThresholdDp`         | Dragging distance required to show the close float, in density-independent pixels (dp). When neither `mountThresholdDp` nor `mountThresholdPx` are provided `1.dp` is used.                                                                | `Float?`                                                     | `null`                                                                                 |
-| `mountThresholdPx`         | Dragging distance required to show the close float, in pixels (px). When neither `mountThresholdDp` nor `mountThresholdPx` are provided `1.                                                                                                | `Float?`                                                     | `null`                                                                                 |
-| `closingThresholdDp`       | Dragging distance (in density-independent pixels) between the main float and the close float that triggers a `CloseFloatConfig.closeBehavior`. When neither `closingThresholdDp` nor `closingThresholdPx` are provided `100.dp` is used.   | `Float?`                                                     | `null`                                                                                 |
-| `closingThresholdPx`       | Dragging distance (in pixels) between the main float and the close float that triggers a `CloseFloatConfig.closeBehavior`. When neither `closingThresholdDp` nor `closingThresholdPx` are provided `100.dp` is used.                       | `Float?`                                                     | `null`                                                                                 |
-| `bottomPaddingDp`          | Bottom padding for the close float in density-independent pixels (dp). When neither `bottomPaddingDp` nor `bottomPaddingPx` are provided `16.dp` is used.                                                                                  | `Float?`                                                     | `null`                                                                                 |
-| `bottomPaddingPx`          | Bottom padding for the close float in pixels (px). When neither `bottomPaddingDp` nor `bottomPaddingPx` are provided `16.dp` is used.                                                                                                      | `Float?`                                                     | `null`                                                                                 |
-| `draggingTransitionSpec`   | Animation specification for dragging. Applied when `FloatingViewsController.enableAnimations` is `true` and `CloseFloatConfig.closeBehavior` is `CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.                                                 | `(Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)` | `spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessHigh)` |
-| `snapToMainTransitionSpec` | Animation specification for snapping to main float. Applied when `FloatingViewsController.enableAnimations` is `true` and `CloseFloatConfig.closeBehavior` is `CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.                                   | `(Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)` | `spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)` | 
-| `closeBehavior`            | Determines how the close float interacts with the main float.                                                                                                                                                                              | `CloseBehavior?`                                             | `CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT`                                              |
-| `followRate`               | Defines the rate at which the close float follows the main float when dragged. Only used when `CloseFloatConfig.closeBehavior` is `CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.                                                               | `Float`                                                      | `0.1f`                                                                                 |
+| Option                     | Description                                                                                                                                                                                                                              | Type                                                         | Default                                                                                |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `enabled`                  | If `true`, enables the close float behavior.                                                                                                                                                                                             | `Boolean`                                                    | `true`                                                                                 |
+| `composable`               | The Composable to be rendered inside the close floating view. If null, `viewFactory` is used.                                                                                                                                            | `(@Composable () -> Unit)?`                                  | `null`                                                                                 |
+| `viewFactory`              | Factory function to create a traditional Android view inside the close floating view. If null, `composable` is used.                                                                                                                     | `((Context) -> View)?`                                       | `null`                                                                                 |
+| `startPointDp`             | Initial position of the close floating view in density-independent pixels (dp). When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used.                                                                       | `PointF?`                                                    | `null`                                                                                 |
+| `startPointPx`             | Initial position of the close float in pixels (px). When neither `startPointDp` nor `startPointPx` are provided `PointF(0,0)` is used.                                                                                                   | `PointF?`                                                    | `null`                                                                                 |
+| `mountThresholdDp`         | Dragging distance required to show the close float, in density-independent pixels (dp). When neither `mountThresholdDp` nor `mountThresholdPx` are provided `1.dp` is used.                                                              | `Float?`                                                     | `null`                                                                                 |
+| `mountThresholdPx`         | Dragging distance required to show the close float, in pixels (px). When neither `mountThresholdDp` nor `mountThresholdPx` are provided `1.                                                                                              | `Float?`                                                     | `null`                                                                                 |
+| `closingThresholdDp`       | Dragging distance (in density-independent pixels) between the main float and the close float that triggers a `CloseFloatConfig.closeBehavior`. When neither `closingThresholdDp` nor `closingThresholdPx` are provided `100.dp` is used. | `Float?`                                                     | `null`                                                                                 |
+| `closingThresholdPx`       | Dragging distance (in pixels) between the main float and the close float that triggers a `CloseFloatConfig.closeBehavior`. When neither `closingThresholdDp` nor `closingThresholdPx` are provided `100.dp` is used.                     | `Float?`                                                     | `null`                                                                                 |
+| `bottomPaddingDp`          | Bottom padding for the close float in density-independent pixels (dp). When neither `bottomPaddingDp` nor `bottomPaddingPx` are provided `16.dp` is used.                                                                                | `Float?`                                                     | `null`                                                                                 |
+| `bottomPaddingPx`          | Bottom padding for the close float in pixels (px). When neither `bottomPaddingDp` nor `bottomPaddingPx` are provided `16.dp` is used.                                                                                                    | `Float?`                                                     | `null`                                                                                 |
+| `draggingTransitionSpec`   | Animation specification for dragging. Applied when `FloatingViewsController.enableAnimations` is `true` and `CloseFloatConfig.closeBehavior` is `CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.                                               | `(Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)` | `spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessHigh)` |
+| `snapToMainTransitionSpec` | Animation specification for snapping to main float. Applied when `FloatingViewsController.enableAnimations` is `true` and `CloseFloatConfig.closeBehavior` is `CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.                                 | `(Transition.Segment<Point>.() -> FiniteAnimationSpec<Int>)` | `spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)` |
+| `closeBehavior`            | Determines how the close float interacts with the main float.                                                                                                                                                                            | `CloseBehavior?`                                             | `CloseBehavior.MAIN_SNAPS_TO_CLOSE_FLOAT`                                              |
+| `followRate`               | Defines the rate at which the close float follows the main float when dragged. Only used when `CloseFloatConfig.closeBehavior` is `CloseBehavior.CLOSE_SNAPS_TO_MAIN_FLOAT`.                                                             | `Float`                                                      | `0.1f`                                                                                 |
 
 ## Contributing
 
 Found a bug? Have a cool idea? Feel free to open an issue or submit a PR. We're all friends here!
 
 Happy floating! 🎈
+
