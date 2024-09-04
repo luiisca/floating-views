@@ -1,4 +1,9 @@
-# 🎈 Kotlin Library for Customizable Floating UI Elements
+[![Latest release](https://img.shields.io/github/v/release/luiisca/floating-views?color=brightgreen&label=latest%20release)](https://github.com/luiisca/floating-views/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+
+
+# 🎈 Floating Views
 
 A Kotlin library for effortlessly creating customizable floating UI elements in Android apps.
 
